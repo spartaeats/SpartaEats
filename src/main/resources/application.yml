@@ -20,19 +20,10 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
 
 server:
   port: ${PORT:8080}
-  servlet:
-    context-path: /v1
 
 springdoc:
   swagger-ui:
     path: /swagger
-
-app:
-  pagination:
-    default-size: 10
-    allowed-sizes: [10, 30, 50]
-    one-indexed: true
