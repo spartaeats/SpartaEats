@@ -35,3 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### 환경 변수 파일 제외 ###
+*.env
+### 로컬 설정 파일 제외 ###
+application-test.yml
+application-test.properties
