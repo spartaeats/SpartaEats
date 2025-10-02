@@ -113,3 +113,5 @@ src/main/java/com/example
 | 🙈 gitfix | gitignore 수정 |
 | 🔨script | package.json 변경(npm 설치 등) |
 | 🧹chore | 관리 등 핵심 내용이 아닌 작업 |
+
+PR_TEMPLATE 테스트
