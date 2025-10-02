@@ -11,4 +11,12 @@ public class NotFoundException extends CommonException {
 		super("NotFound", HttpStatus.NOT_FOUND);
 		setErrorCode(true);
 	}
+
+	public NotFoundException(String message) {
+		super(message, HttpStatus.NOT_FOUND);
+	}
+
+	public NotFoundException(Map<String, List<String>> errorMessages) {
+		super(errorMessages, HttpStatus.NOT_FOUND);
+	}
 }
