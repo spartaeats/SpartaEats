@@ -6,5 +6,12 @@ spring:
     password:
   jpa:
     hibernate:
-      ddl-auto: none   # 필요에 따라 create/update 가능
+      ddl-auto: create
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
     database-platform: org.hibernate.dialect.H2Dialect
+
+  main:
+    banner-mode: "off"
+
