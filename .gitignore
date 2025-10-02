@@ -41,3 +41,6 @@ out/
 ### 로컬 설정 파일 제외 ###
 application-test.yml
 application-test.properties
+
+### QueryDSL 등 라이브러리에서 생성 클래스 제외 ###
+generated/
