@@ -50,8 +50,10 @@ sourceSets {
 
 tasks.withType(JavaCompile) {
     options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+    options.annotationProcessorPath = configurations.annotationProcessor
 }
 
 clean.doLast {
     file(querydslDir).deleteDir()
 }
+
