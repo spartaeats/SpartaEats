@@ -1,6 +1,5 @@
 package com.sparta.sparta_eats.address.application.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.sparta.sparta_eats.address.domain.entity.Address;
 import com.sparta.sparta_eats.address.domain.entity.Coordinate;
 import com.sparta.sparta_eats.address.domain.repository.AddressRepository;
@@ -11,6 +10,8 @@ import com.sparta.sparta_eats.address.presentation.dto.response.AddressResponseV
 import com.sparta.sparta_eats.address.presentation.dto.response.KakaoCoordinateResponse;
 import com.sparta.sparta_eats.global.domain.exception.BadRequestException;
 import com.sparta.sparta_eats.global.domain.exception.NotFoundException;
+import com.sparta.sparta_eats.user.domain.entity.User;
+import com.sparta.sparta_eats.user.infrastructure.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -21,14 +22,13 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-// TODO username -> User or token
 public class AddressServiceV1 {
     private final AddressRepository addressRepository;
+    private final UserRepository userRepository;
 
     private Address toEntity(AddressRequestV1 request) {
         return Address.builder()
@@ -54,7 +54,7 @@ public class AddressServiceV1 {
                 .toEntity(KakaoCoordinateResponse.class)
                 .getBody();
 
-        if(response == null || response.documents().isEmpty())
+        if (response == null || response.documents().isEmpty())
             throw new BadRequestException("나쁜 요청");
 
         KakaoCoordinateResponse.Document document = response.documents().get(0);
@@ -66,29 +66,26 @@ public class AddressServiceV1 {
     }
 
     @Transactional
-    public ResponseEntity<AddressResponseV1> saveAddress(String username, AddressRequestV1 request) throws URISyntaxException {
-        List<Address> addressList = addressRepository.findAllByUsername(username);
-        if(!addressList.isEmpty()) {
-            addressList.forEach(address -> address.setIsDefault(false));
-        }
+    public ResponseEntity<AddressResponseV1> saveAddress(User user, AddressRequestV1 request) throws URISyntaxException {
+        Address defaultAddress = addressRepository.findByUserAndIsDefault(user, true)
+                .orElseThrow(() -> new NotFoundException("기본 주소가 없습니다."));
+        defaultAddress.setIsDefault(false);
 
         Address newAddress = toEntity(request);
         newAddress.setCoordinate(loadCoordinate(request.addrRoad()));
         newAddress.setIsDefault(true);
 
-        return ResponseEntity.created(new URI("temp"))
+        return ResponseEntity.created(new URI("/"))
                 .body(newAddress.toDto());
     }
 
-    public ResponseEntity<List<AddressResponseV1>> getAddressList(String username) {
-        return ResponseEntity.ok(addressRepository.findAllByUsername(username)
+    public ResponseEntity<List<AddressResponseV1>> getAddressList(User user) {
+        return ResponseEntity.ok(addressRepository.findAllByUser(user)
                 .stream().map(Address::toDto).toList());
     }
 
     @Transactional
-    public ResponseEntity<AddressResponseV1> updateAddress(String username, AddressUpdateRequestV1 updateRequest) throws URISyntaxException {
-        if(!addressRepository.existsByUsername(username))
-            throw new NotFoundException("저장된 주소가 없습니다.");
+    public ResponseEntity<AddressResponseV1> updateAddress(User user, AddressUpdateRequestV1 updateRequest) throws URISyntaxException {
         Address address = addressRepository.findById(updateRequest.id())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
         address.update(updateRequest);
@@ -99,8 +96,8 @@ public class AddressServiceV1 {
 
     // QueryDSL 고려..
     @Transactional
-    public ResponseEntity<AddressResponseV1> setAsDefaultV1(UUID id) {
-        Address defaultAddress = addressRepository.findByIsDefault(true)
+    public ResponseEntity<AddressResponseV1> setAsDefaultV1(User user, UUID id) {
+        Address defaultAddress = addressRepository.findByUserAndIsDefault(user, true)
                 .orElseThrow(() -> new NotFoundException("기본 주소가 없습니다."));
         defaultAddress.setIsDefault(false);
 
@@ -111,13 +108,12 @@ public class AddressServiceV1 {
         return ResponseEntity.ok(address.toDto());
     }
 
-    // TODO delete 응답
     @Transactional
-    public ResponseEntity<AddressDeleteResponseV1> deleteAddress(String username, UUID id) {
+    public ResponseEntity<AddressDeleteResponseV1> deleteAddress(String userId, UUID id) {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
 
-        address.delete(username);
+        address.delete(userId);
 
         return ResponseEntity.ok()
                 .body(address.toDeleteDto());

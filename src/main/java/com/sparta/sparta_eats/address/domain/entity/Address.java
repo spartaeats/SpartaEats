@@ -5,6 +5,7 @@ import com.sparta.sparta_eats.address.presentation.dto.request.AddressUpdateRequ
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressDeleteResponseV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressResponseV1;
 import com.sparta.sparta_eats.global.entity.BaseEntity;
+import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,6 +40,10 @@ public class Address extends BaseEntity {
     private String direction;
     @Column(length = 20)
     private String entrancePassword;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     private LocalDateTime deletedAt;
     @Column(length = 20)
