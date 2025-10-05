@@ -24,8 +24,8 @@ logging:
 
 server:
   port: ${PORT:8080}
-  servlet:
-    context-path: /v1
+#  servlet:
+#    context-path: /v1
 
 springdoc:
   swagger-ui:
@@ -36,3 +36,8 @@ app:
     default-size: 10
     allowed-sizes: [10, 30, 50]
     one-indexed: true
+
+# JWT 설정 (개발환경 오버라이드)
+jwt:
+  secret-key: ${JWT_SECRET_KEY:dev-secret-key-for-development-only-change-in-production}
+  expiration-time: ${JWT_EXPIRATION_TIME:86400000}  # 개발은 24시간으로 길게
