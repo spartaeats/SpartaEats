@@ -29,5 +29,5 @@ springdoc:
 
 # JWT 설정 (공통)
 jwt:
-  secret-key: ${JWT_SECRET_KEY:dktkaruqtkfdpthwngkswksgkrhtlvek1111111111111111}
+  secret-key: ${JWT_SECRET_KEY}
   expiration-time: ${JWT_EXPIRATION_TIME:3600000}  # 기본 1시간

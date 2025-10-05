@@ -10,6 +10,7 @@ spring:
   h2:
     console:
       enabled: true
+      path: /h2-console
   jpa:
     open-in-view: false
     hibernate:
@@ -39,5 +40,8 @@ app:
 
 # JWT 설정 (개발환경 오버라이드)
 jwt:
-  secret-key: ${JWT_SECRET_KEY:dktkaruqtkfdpthwngkswksgkrhtlvek1111111111111111}
+  secret-key: ${JWT_SECRET_KEY}
   expiration-time: ${JWT_EXPIRATION_TIME:86400000}  # 개발은 24시간으로 길게
+
+kakao:
+  api-key: ${KAKAO_API_KEY}

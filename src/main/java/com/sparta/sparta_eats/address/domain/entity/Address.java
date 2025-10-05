@@ -100,4 +100,8 @@ public class Address extends BaseEntity {
         deletedAt = LocalDateTime.now();
         deletedBy = username;
     }
+
+    public void assignUser(User user) {
+        this.user = user;
+    }
 }

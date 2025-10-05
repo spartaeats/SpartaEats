@@ -1,30 +1,26 @@
 package com.sparta.sparta_eats.address.application.service;
 
 import com.sparta.sparta_eats.address.domain.entity.Address;
-import com.sparta.sparta_eats.address.domain.entity.Coordinate;
 import com.sparta.sparta_eats.address.domain.repository.AddressRepository;
 import com.sparta.sparta_eats.address.infrastructure.KakaoApiClient;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressUpdateRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressDeleteResponseV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressResponseV1;
-import com.sparta.sparta_eats.address.presentation.dto.response.KakaoCoordinateResponse;
-import com.sparta.sparta_eats.global.domain.exception.BadRequestException;
 import com.sparta.sparta_eats.global.domain.exception.NotFoundException;
 import com.sparta.sparta_eats.user.domain.entity.User;
-import com.sparta.sparta_eats.user.infrastructure.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 
-import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AddressServiceV1 {
@@ -44,13 +40,15 @@ public class AddressServiceV1 {
 
     @Transactional
     public ResponseEntity<AddressResponseV1> saveAddress(User user, AddressRequestV1 request) throws URISyntaxException {
-        Address defaultAddress = addressRepository.findByUserAndIsDefault(user, true)
-                .orElseThrow(() -> new NotFoundException("기본 주소가 없습니다."));
-        defaultAddress.setIsDefault(false);
+        addressRepository.findByUserAndIsDefault(user, true)
+                .ifPresent(address -> address.setIsDefault(false));
 
         Address newAddress = toEntity(request);
         newAddress.setCoordinate(kakaoApiClient.loadCoordinate(request.addrRoad()));
         newAddress.setIsDefault(true);
+        newAddress.assignUser(user);
+
+        addressRepository.save(newAddress);
 
         return ResponseEntity.created(new URI("/"))
                 .body(newAddress.toDto());

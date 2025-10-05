@@ -22,7 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/v1/addresses")
 public class AddressControllerV1 {
-    private AddressServiceV1 addressService;
+    private final AddressServiceV1 addressService;
 
     @Operation(summary = "주소 저장", description = "새로운 주소 저장 최대 20개까지 저장 가능")
     @PostMapping
@@ -39,21 +39,19 @@ public class AddressControllerV1 {
 
     @Operation(summary = "주소 수정", description = "특정 주소 전체값 수정")
     @PutMapping
-    public ResponseEntity<AddressResponseV1> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetails, AddressUpdateRequestV1 updateRequest) throws URISyntaxException {
+    public ResponseEntity<AddressResponseV1> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestBody AddressUpdateRequestV1 updateRequest) throws URISyntaxException {
         return addressService.updateAddress(userDetails.getUser(), updateRequest);
     }
 
     @Operation(summary = "주소 기본값 지정", description = "기본 주소 변경")
-    @PatchMapping
-    @RequestMapping("/default")
-    public ResponseEntity<AddressResponseV1> setAsDefault(@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestBody UUID id) {
+    @PatchMapping("{id}/default")
+    public ResponseEntity<AddressResponseV1> setAsDefault(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable UUID id) {
         return addressService.setAsDefaultV1(userDetails.getUser(), id);
     }
 
     @Operation(summary = "주소 삭제", description = "주소 삭제, 실제 삭제는 이뤄지지 않고 soft delete 수행")
-    @PatchMapping
-    @RequestMapping("/delete")
-    public ResponseEntity<AddressDeleteResponseV1> deleteAddress(@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestBody UUID id) {
+    @PatchMapping("{id}/delete")
+    public ResponseEntity<AddressDeleteResponseV1> deleteAddress(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable UUID id) {
         return addressService.deleteAddress(userDetails.getUsername(), id);
     }
 }
