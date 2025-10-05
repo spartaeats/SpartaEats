@@ -19,7 +19,7 @@ public class SwaggerConfig {
                         .description("스파르타 이츠 프로젝트 API 명세서")
                         .version("v1"))
                 .servers(List.of(
-                        new Server().url("/v1").description("API Base URL")
+                        new Server().url("/").description("API Base URL")
                 ));
     }
 }

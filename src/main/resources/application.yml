@@ -27,3 +27,8 @@ server:
 springdoc:
   swagger-ui:
     path: /swagger
+
+# JWT 설정 (공통)
+jwt:
+  secret-key: ${JWT_SECRET_KEY:your-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm-please-change-this-in-production}
+  expiration-time: ${JWT_EXPIRATION_TIME:3600000}  # 기본 1시간
