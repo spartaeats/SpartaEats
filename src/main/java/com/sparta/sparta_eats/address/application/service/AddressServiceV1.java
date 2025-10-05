@@ -3,6 +3,7 @@ package com.sparta.sparta_eats.address.application.service;
 import com.sparta.sparta_eats.address.domain.entity.Address;
 import com.sparta.sparta_eats.address.domain.entity.Coordinate;
 import com.sparta.sparta_eats.address.domain.repository.AddressRepository;
+import com.sparta.sparta_eats.address.infrastructure.KakaoApiClient;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressUpdateRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressDeleteResponseV1;
@@ -28,7 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AddressServiceV1 {
     private final AddressRepository addressRepository;
-    private final UserRepository userRepository;
+    private final KakaoApiClient kakaoApiClient;
 
     private Address toEntity(AddressRequestV1 request) {
         return Address.builder()
@@ -41,30 +42,6 @@ public class AddressServiceV1 {
                 .build();
     }
 
-    private Coordinate loadCoordinate(String addrRoad) throws URISyntaxException {
-        RestClient client = RestClient.create();
-
-        KakaoCoordinateResponse response = client
-                .get()
-                .uri(uriBuilder -> uriBuilder.path("https://dapi.kakao.com/v2/local/search/address.json")
-                        .queryParam("query", addrRoad)
-                        .build())
-                .header("Authorization", "")
-                .retrieve()
-                .toEntity(KakaoCoordinateResponse.class)
-                .getBody();
-
-        if (response == null || response.documents().isEmpty())
-            throw new BadRequestException("나쁜 요청");
-
-        KakaoCoordinateResponse.Document document = response.documents().get(0);
-
-        return Coordinate.builder()
-                .addrLat(new BigDecimal(document.getY()))
-                .addrLng(new BigDecimal(document.getX()))
-                .build();
-    }
-
     @Transactional
     public ResponseEntity<AddressResponseV1> saveAddress(User user, AddressRequestV1 request) throws URISyntaxException {
         Address defaultAddress = addressRepository.findByUserAndIsDefault(user, true)
@@ -72,7 +49,7 @@ public class AddressServiceV1 {
         defaultAddress.setIsDefault(false);
 
         Address newAddress = toEntity(request);
-        newAddress.setCoordinate(loadCoordinate(request.addrRoad()));
+        newAddress.setCoordinate(kakaoApiClient.loadCoordinate(request.addrRoad()));
         newAddress.setIsDefault(true);
 
         return ResponseEntity.created(new URI("/"))
@@ -89,7 +66,7 @@ public class AddressServiceV1 {
         Address address = addressRepository.findById(updateRequest.id())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
         address.update(updateRequest);
-        address.setCoordinate(loadCoordinate(updateRequest.addrRoad()));
+        address.setCoordinate(kakaoApiClient.loadCoordinate(updateRequest.addrRoad()));
 
         return ResponseEntity.ok(address.toDto());
     }
