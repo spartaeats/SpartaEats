@@ -46,7 +46,10 @@ dependencies {
 
     // test용 H2 DB
     testImplementation 'com.h2database:h2'
+    runtimeOnly 'com.h2database:h2'
 
+    // env 파일 읽어주는 라이브러리
+    implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 }
 
 tasks.named('test') {

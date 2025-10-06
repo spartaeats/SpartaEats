@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -57,11 +58,15 @@ public class SecurityConfig {
     // 세션 미사용
     http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
+    // h2 console 을 위해 iframe 잠시 허용
+    http.headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
+
     // 인가 규칙
     http.authorizeHttpRequests(auth -> auth
         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()                     // 프리플라이트 허용
         .requestMatchers("/v1/auth/**", "/auth/**").permitAll()                     // 회원가입/로그인
         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()           // Swagger
+        .requestMatchers("/h2-console/**").permitAll()                                // H2 DB
         .anyRequest().authenticated()
     );
 
