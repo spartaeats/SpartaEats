@@ -1,5 +1,6 @@
 package com.sparta.sparta_eats.address.domain.entity;
 
+import com.sparta.sparta_eats.address.domain.LocationInfo;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressUpdateRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressDeleteResponseV1;
@@ -103,5 +104,13 @@ public class Address extends BaseEntity {
 
     public void assignUser(User user) {
         this.user = user;
+    }
+
+    public LocationInfo extractLocationInfo() {
+        return LocationInfo.builder()
+                .name(name)
+                .address(addrDetail)
+                .coordinate(coordinate)
+                .build();
     }
 }

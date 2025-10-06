@@ -1,12 +1,16 @@
 package com.sparta.sparta_eats.address.application.service;
 
+import com.sparta.sparta_eats.address.domain.LocationInfo;
 import com.sparta.sparta_eats.address.domain.entity.Address;
+import com.sparta.sparta_eats.address.domain.entity.Coordinate;
 import com.sparta.sparta_eats.address.domain.repository.AddressRepository;
 import com.sparta.sparta_eats.address.infrastructure.KakaoApiClient;
+import com.sparta.sparta_eats.address.infrastructure.TmapApiClient;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressUpdateRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressDeleteResponseV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressResponseV1;
+import com.sparta.sparta_eats.address.presentation.dto.response.DistanceResponse;
 import com.sparta.sparta_eats.global.domain.exception.NotFoundException;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -26,6 +31,7 @@ import java.util.UUID;
 public class AddressServiceV1 {
     private final AddressRepository addressRepository;
     private final KakaoApiClient kakaoApiClient;
+    private final TmapApiClient tmapApiClient;
 
     private Address toEntity(AddressRequestV1 request) {
         return Address.builder()
@@ -93,6 +99,31 @@ public class AddressServiceV1 {
         return ResponseEntity.ok()
                 .body(address.toDeleteDto());
 
+    }
+
+    public ResponseEntity<DistanceResponse> getDistanceInfo(UUID addressId, UUID storeId) {
+        LocationInfo start = addressRepository.findById(addressId).orElseThrow().extractLocationInfo();
+        LocationInfo target = LocationInfo.builder()
+                .address("서울특별시 종로구 새문안로5길 37 (도렴동)")
+                .coordinate(Coordinate.builder()
+                        .addrLng(BigDecimal.valueOf(126.974213132))
+                        .addrLat(BigDecimal.valueOf(37.573653031))
+                        .build())
+                .name("무봉리 토종순대국 광화문점")
+                .build();
+        // TODO store 연동 되면 store charge 정보 가져와야함
+        int charge = 0;
+        int distance = tmapApiClient.getDistance(start.getCoordinate(), target.getCoordinate());
+        int time = tmapApiClient.getTime(start.getCoordinate(), target.getCoordinate());
+        charge += (distance - 2000) / 1000 * 100;
+
+        return ResponseEntity.ok(DistanceResponse.builder()
+                .start(start)
+                .target(target)
+                .charge(charge)
+                .distance(distance)
+                .time(time)
+                .build());
     }
 
 }
