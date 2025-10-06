@@ -5,7 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io # 깃허브 컨테이너 저장소를 사용한다.
-  IMAGE_NAME: yonggyo1125/auth-service
+  IMAGE_NAME: qqqqq7666/cd-service
   VERSION: latest
 
 jobs:
