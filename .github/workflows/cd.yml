@@ -8,6 +8,9 @@ env:
   IMAGE_NAME: qqqqq7666/cd-service
   VERSION: latest
 
+permissions:
+  packages: write
+
 jobs:
   Deploy:
     name: Build Docker Image and Deploy EC2 #도커 이미지를 만들고 EC2에 배포
