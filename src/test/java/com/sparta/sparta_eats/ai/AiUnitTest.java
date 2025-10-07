@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 public class AiUnitTest {
     @Test
     void initTest() {
-        String apiKey;
+        String apiKey = "";
 
         Client client = new Client.Builder().apiKey(apiKey).build();
 
