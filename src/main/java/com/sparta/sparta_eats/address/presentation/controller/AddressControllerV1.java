@@ -5,6 +5,7 @@ import com.sparta.sparta_eats.address.presentation.dto.request.AddressRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressUpdateRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressDeleteResponseV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressResponseV1;
+import com.sparta.sparta_eats.address.presentation.dto.response.DistanceResponse;
 import com.sparta.sparta_eats.global.infrastructure.config.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,5 +54,11 @@ public class AddressControllerV1 {
     @PatchMapping("{id}/delete")
     public ResponseEntity<AddressDeleteResponseV1> deleteAddress(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable UUID id) {
         return addressService.deleteAddress(userDetails.getUsername(), id);
+    }
+
+    @Operation(summary = "배달 거리 정보 조회", description = "특정 매장을 대상으로 현재 주소와의 거리, 배달 시간, 배달 요금 조회")
+    @GetMapping("{addressId}/distance")
+    public ResponseEntity<DistanceResponse> getDistanceInfo(@PathVariable UUID addressId, @RequestParam UUID storeId) {
+        return addressService.getDistanceInfo(addressId, storeId);
     }
 }
