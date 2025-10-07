@@ -47,3 +47,6 @@ kakao:
   api-key: ${KAKAO_API_KEY}
 tmap:
   api-key: ${TMAP_API_KEY}
+google:
+  api:
+    key: ${GOOGLE_API_KEY}
