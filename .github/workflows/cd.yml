@@ -53,6 +53,7 @@ jobs:
           script: | # 실행할 스크립트
             sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin << EOF
             ${{ secrets.GHCR_PAT }}
+            EOF
             sh deploy.sh \ 
                 "${{ secrets.JWT_SECRET_KEY }}" \
                 "${{ secrets.KAKAO_API_KEY }}" \
