@@ -52,7 +52,7 @@ jobs:
           port: ${{ secrets.REMOTE_SSH_PORT }} # 접속포트
           script: | # 실행할 스크립트
             sh deploy.sh \ 
-                ${{ secrets.JWT_SECRET_KEY }} \
-                ${{ secrets.KAKAO_API_KEY }} \
-                ${{ secrets.TMAP_API_KEY }} \
-                ${{ secrets.GOOGLE_API_KEY }}
+                "${{ secrets.JWT_SECRET_KEY }}" \
+                "${{ secrets.KAKAO_API_KEY }}" \
+                "${{ secrets.TMAP_API_KEY }}" \
+                "${{ secrets.GOOGLE_API_KEY }}"
