@@ -33,3 +33,7 @@ springdoc:
 jwt:
   secret-key: ${JWT_SECRET_KEY}
   expiration-time: ${JWT_EXPIRATION_TIME:3600000}  # 기본 1시간
+
+# 개발 과정에서는 dummy-key-for-test 사용중
+kakao:
+  api-key: ${KAKAO_API_KEY:dummy-key-for-test}
