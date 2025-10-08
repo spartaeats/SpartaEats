@@ -51,6 +51,8 @@ jobs:
           key: ${{ secrets.REMOTE_PRIVATE_KEY }} # ec2 instance pem key
           port: ${{ secrets.REMOTE_SSH_PORT }} # 접속포트
           script: | # 실행할 스크립트
+            sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin << EOF
+            ${{ secrets.GHCR_PAT }}
             sh deploy.sh \ 
                 "${{ secrets.JWT_SECRET_KEY }}" \
                 "${{ secrets.KAKAO_API_KEY }}" \
