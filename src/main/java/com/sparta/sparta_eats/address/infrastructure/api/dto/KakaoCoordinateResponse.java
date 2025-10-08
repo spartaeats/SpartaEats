@@ -1,4 +1,4 @@
-package com.sparta.sparta_eats.address.presentation.dto.response;
+package com.sparta.sparta_eats.address.infrastructure.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;

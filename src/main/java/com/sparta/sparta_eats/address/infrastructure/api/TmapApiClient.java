@@ -1,4 +1,4 @@
-package com.sparta.sparta_eats.address.infrastructure;
+package com.sparta.sparta_eats.address.infrastructure.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sparta.sparta_eats.address.domain.entity.Coordinate;
@@ -6,8 +6,6 @@ import com.sparta.sparta_eats.address.presentation.dto.request.TmapTimeRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-
-import java.time.LocalDateTime;
 
 @Component
 public class TmapApiClient {
