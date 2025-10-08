@@ -47,4 +47,7 @@ jwt:
 kakao:
   api-key: ${KAKAO_API_KEY:dummy-key-for-test}
 tmap:
-  api-key: ${TMAP_API_KEY:dummy-key-for-test}
+  api-key: ${TMAP_API_KEY}
+google:
+  api:
+    key: ${GOOGLE_API_KEY}
