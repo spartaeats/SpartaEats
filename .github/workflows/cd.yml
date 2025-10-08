@@ -54,7 +54,7 @@ jobs:
             sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin << EOF
             ${{ secrets.GHCR_PAT }}
             EOF
-            sh deploy.sh \ 
+            sh deploy.sh \
                 "${{ secrets.JWT_SECRET_KEY }}" \
                 "${{ secrets.KAKAO_API_KEY }}" \
                 "${{ secrets.TMAP_API_KEY }}" \
