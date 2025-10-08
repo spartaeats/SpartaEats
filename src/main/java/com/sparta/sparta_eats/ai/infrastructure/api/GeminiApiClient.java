@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
 import com.sparta.sparta_eats.ai.infrastructure.api.dto.FindStoresRequest;
+import jakarta.annotation.PostConstruct;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -16,8 +17,13 @@ import java.util.List;
 public class GeminiApiClient {
     @Value("${google.api.key}")
     private String apiKey;
-    private final Client client = Client.builder().apiKey(apiKey).build();
+    private Client client;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @PostConstruct
+    public void init() {
+         client = Client.builder().apiKey(apiKey).build();
+    }
 
     public String reviewSummary(List<String> reviewList) {
         StringBuilder builder = new StringBuilder();
