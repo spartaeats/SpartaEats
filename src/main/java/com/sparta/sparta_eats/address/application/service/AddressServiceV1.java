@@ -45,7 +45,7 @@ public class AddressServiceV1 {
     }
 
     @Transactional
-    public ResponseEntity<AddressResponseV1> saveAddress(User user, AddressRequestV1 request) throws URISyntaxException {
+    public AddressResponseV1 saveAddress(User user, AddressRequestV1 request) throws URISyntaxException {
         addressRepository.findByUserAndIsDefault(user, true)
                 .ifPresent(address -> address.setIsDefault(false));
 
@@ -56,28 +56,27 @@ public class AddressServiceV1 {
 
         addressRepository.save(newAddress);
 
-        return ResponseEntity.created(new URI("/"))
-                .body(newAddress.toDto());
+        return newAddress.toDto();
     }
 
-    public ResponseEntity<List<AddressResponseV1>> getAddressList(User user) {
-        return ResponseEntity.ok(addressRepository.findAllByUser(user)
-                .stream().map(Address::toDto).toList());
+    public List<AddressResponseV1> getAddressList(User user) {
+        return addressRepository.findAllByUser(user)
+                .stream().map(Address::toDto).toList();
     }
 
     @Transactional
-    public ResponseEntity<AddressResponseV1> updateAddress(User user, AddressUpdateRequestV1 updateRequest) throws URISyntaxException {
+    public AddressResponseV1 updateAddress(User user, AddressUpdateRequestV1 updateRequest) throws URISyntaxException {
         Address address = addressRepository.findById(updateRequest.id())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
         address.update(updateRequest);
         address.setCoordinate(kakaoApiClient.loadCoordinate(updateRequest.addrRoad()));
 
-        return ResponseEntity.ok(address.toDto());
+        return address.toDto();
     }
 
     // QueryDSL 고려..
     @Transactional
-    public ResponseEntity<AddressResponseV1> setAsDefaultV1(User user, UUID id) {
+    public AddressResponseV1 setAsDefaultV1(User user, UUID id) {
         Address defaultAddress = addressRepository.findByUserAndIsDefault(user, true)
                 .orElseThrow(() -> new NotFoundException("기본 주소가 없습니다."));
         defaultAddress.setIsDefault(false);
@@ -86,22 +85,21 @@ public class AddressServiceV1 {
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
         address.setIsDefault(true);
 
-        return ResponseEntity.ok(address.toDto());
+        return address.toDto();
     }
 
     @Transactional
-    public ResponseEntity<AddressDeleteResponseV1> deleteAddress(String userId, UUID id) {
+    public AddressDeleteResponseV1 deleteAddress(String userId, UUID id) {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
 
         address.delete(userId);
 
-        return ResponseEntity.ok()
-                .body(address.toDeleteDto());
+        return address.toDeleteDto();
 
     }
 
-    public ResponseEntity<DistanceResponse> getDistanceInfo(UUID addressId, UUID storeId) {
+    public DistanceResponse getDistanceInfo(UUID addressId, UUID storeId) {
         LocationInfo start = addressRepository.findById(addressId).orElseThrow().extractLocationInfo();
         LocationInfo target = LocationInfo.builder()
                 .address("서울특별시 종로구 새문안로5길 37 (도렴동)")
@@ -117,13 +115,13 @@ public class AddressServiceV1 {
         int time = tmapApiClient.getTime(start.getCoordinate(), target.getCoordinate());
         charge += (distance - 2000) / 1000 * 100;
 
-        return ResponseEntity.ok(DistanceResponse.builder()
+        return DistanceResponse.builder()
                 .start(start)
                 .target(target)
                 .charge(charge)
                 .distance(distance)
                 .time(time)
-                .build());
+                .build();
     }
 
 }
