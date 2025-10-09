@@ -1,7 +1,6 @@
 package com.sparta.sparta_eats.address.presentation.controller;
 
 import com.sparta.sparta_eats.address.application.service.AddressServiceV1;
-import com.sparta.sparta_eats.address.domain.entity.Address;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressUpdateRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressDeleteResponseV1;
@@ -50,7 +49,7 @@ public class AddressControllerV1 {
     @Operation(summary = "주소 기본값 지정", description = "기본 주소 변경")
     @PatchMapping("{id}/default")
     public ResponseEntity<AddressResponseV1> setAsDefault(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable UUID id) {
-        return ResponseEntity.ok(addressService.setAsDefaultV1(userDetails.getUser(), id));
+        return ResponseEntity.ok(addressService.setAsDefault(userDetails.getUser(), id));
     }
 
     @Operation(summary = "주소 삭제", description = "주소 삭제, 실제 삭제는 이뤄지지 않고 soft delete 수행")

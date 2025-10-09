@@ -15,12 +15,10 @@ import com.sparta.sparta_eats.global.domain.exception.NotFoundException;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.UUID;
@@ -74,18 +72,15 @@ public class AddressServiceV1 {
         return address.toDto();
     }
 
-    // QueryDSL 고려..
     @Transactional
-    public AddressResponseV1 setAsDefaultV1(User user, UUID id) {
-        Address defaultAddress = addressRepository.findByUserAndIsDefault(user, true)
-                .orElseThrow(() -> new NotFoundException("기본 주소가 없습니다."));
-        defaultAddress.setIsDefault(false);
+    public AddressResponseV1 setAsDefault(User user, UUID id) {
+        addressRepository.unsetAllDefaultsByUser(user);
 
-        Address address = addressRepository.findById(id)
+        Address newDefault = addressRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
-        address.setIsDefault(true);
+        newDefault.setIsDefault(true);
 
-        return address.toDto();
+        return newDefault.toDto();
     }
 
     @Transactional
