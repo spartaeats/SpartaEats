@@ -105,6 +105,7 @@ public class AddressServiceV1 {
                 .name("무봉리 토종순대국 광화문점")
                 .build();
         // TODO store 연동 되면 store charge 정보 가져와야함
+        // 이후에 요금 계산 정책이 복잡해 질 시에 계산 로직을 클래스로 분리
         int charge = 0;
         int distance = tmapApiClient.getDistance(start.getCoordinate(), target.getCoordinate());
         int time = tmapApiClient.getTime(start.getCoordinate(), target.getCoordinate());
