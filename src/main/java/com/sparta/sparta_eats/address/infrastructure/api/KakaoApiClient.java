@@ -35,8 +35,8 @@ public class KakaoApiClient {
         KakaoCoordinateResponse.Document document = response.documents().get(0);
 
         return Coordinate.builder()
-                .addrLat(new BigDecimal(document.getY()))
-                .addrLng(new BigDecimal(document.getX()))
+                .addrLat(new BigDecimal(document.y()))
+                .addrLng(new BigDecimal(document.x()))
                 .build();
     }
 }

@@ -67,6 +67,7 @@ public class AddressServiceV1 {
         Address address = addressRepository.findById(updateRequest.id())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
         address.update(updateRequest);
+
         address.setCoordinate(kakaoApiClient.loadCoordinate(updateRequest.addrRoad()));
 
         return address.toDto();
