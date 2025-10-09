@@ -97,9 +97,9 @@ public class Address extends BaseEntity {
         entrancePassword = updateRequest.entrancePassword();
     }
 
-    public void delete(String username) {
+    public void delete(String userId) {
         deletedAt = LocalDateTime.now();
-        deletedBy = username;
+        deletedBy = userId;
     }
 
     public void assignUser(User user) {
