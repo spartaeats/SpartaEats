@@ -9,9 +9,11 @@ import com.sparta.sparta_eats.address.presentation.dto.response.DistanceResponse
 import com.sparta.sparta_eats.global.infrastructure.config.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -23,13 +25,14 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/v1/addresses")
+@Validated
 public class AddressControllerV1 {
     private final AddressServiceV1 addressService;
 
     @Operation(summary = "주소 저장", description = "새로운 주소 저장 최대 20개까지 저장 가능")
     @PostMapping
     public ResponseEntity<AddressResponseV1> saveAddress(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                         @RequestBody AddressRequestV1 request) throws URISyntaxException {
+                                                         @Valid @RequestBody AddressRequestV1 request) throws URISyntaxException {
         return  ResponseEntity.created(new URI("/"))
                 .body(addressService.saveAddress(userDetails.getUser(), request));
     }
