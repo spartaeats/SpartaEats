@@ -1,8 +1,8 @@
 package com.sparta.sparta_eats.address.infrastructure.api;
 
 import com.sparta.sparta_eats.address.domain.entity.Coordinate;
-import com.sparta.sparta_eats.address.infrastructure.api.dto.TmapRouteResponse;
-import com.sparta.sparta_eats.address.presentation.dto.request.TmapTimeRequest;
+import com.sparta.sparta_eats.address.infrastructure.api.dto.response.TmapRouteResponse;
+import com.sparta.sparta_eats.address.infrastructure.api.dto.request.TmapTimeRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
