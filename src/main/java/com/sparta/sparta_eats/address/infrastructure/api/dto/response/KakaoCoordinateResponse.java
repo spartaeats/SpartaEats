@@ -1,18 +1,14 @@
-package com.sparta.sparta_eats.address.infrastructure.api.dto;
+package com.sparta.sparta_eats.address.infrastructure.api.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
-import lombok.Getter;
 
 import java.util.List;
 
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record KakaoCoordinateResponse(List<Document> documents) {
+
     @JsonIgnoreProperties(ignoreUnknown = true)
-    @Getter
-    public static class Document {
-        private String y;
-        private String x;
-    }
+    public record Document(String x, String y) { }
 }

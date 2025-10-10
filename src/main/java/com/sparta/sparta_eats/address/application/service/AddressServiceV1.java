@@ -15,12 +15,10 @@ import com.sparta.sparta_eats.global.domain.exception.NotFoundException;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.UUID;
@@ -45,7 +43,7 @@ public class AddressServiceV1 {
     }
 
     @Transactional
-    public ResponseEntity<AddressResponseV1> saveAddress(User user, AddressRequestV1 request) throws URISyntaxException {
+    public AddressResponseV1 saveAddress(User user, AddressRequestV1 request) throws URISyntaxException {
         addressRepository.findByUserAndIsDefault(user, true)
                 .ifPresent(address -> address.setIsDefault(false));
 
@@ -56,52 +54,48 @@ public class AddressServiceV1 {
 
         addressRepository.save(newAddress);
 
-        return ResponseEntity.created(new URI("/"))
-                .body(newAddress.toDto());
+        return newAddress.toDto();
     }
 
-    public ResponseEntity<List<AddressResponseV1>> getAddressList(User user) {
-        return ResponseEntity.ok(addressRepository.findAllByUser(user)
-                .stream().map(Address::toDto).toList());
+    public List<AddressResponseV1> getAddressList(User user) {
+        return addressRepository.findAllByUser(user)
+                .stream().map(Address::toDto).toList();
     }
 
     @Transactional
-    public ResponseEntity<AddressResponseV1> updateAddress(User user, AddressUpdateRequestV1 updateRequest) throws URISyntaxException {
+    public AddressResponseV1 updateAddress(User user, AddressUpdateRequestV1 updateRequest) throws URISyntaxException {
         Address address = addressRepository.findById(updateRequest.id())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
         address.update(updateRequest);
+
         address.setCoordinate(kakaoApiClient.loadCoordinate(updateRequest.addrRoad()));
 
-        return ResponseEntity.ok(address.toDto());
+        return address.toDto();
     }
 
-    // QueryDSL 고려..
     @Transactional
-    public ResponseEntity<AddressResponseV1> setAsDefaultV1(User user, UUID id) {
-        Address defaultAddress = addressRepository.findByUserAndIsDefault(user, true)
-                .orElseThrow(() -> new NotFoundException("기본 주소가 없습니다."));
-        defaultAddress.setIsDefault(false);
+    public AddressResponseV1 setAsDefault(User user, UUID id) {
+        addressRepository.unsetAllDefaultsByUser(user);
 
-        Address address = addressRepository.findById(id)
+        Address newDefault = addressRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
-        address.setIsDefault(true);
+        newDefault.setIsDefault(true);
 
-        return ResponseEntity.ok(address.toDto());
+        return newDefault.toDto();
     }
 
     @Transactional
-    public ResponseEntity<AddressDeleteResponseV1> deleteAddress(String userId, UUID id) {
+    public AddressDeleteResponseV1 deleteAddress(String userId, UUID id) {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
 
         address.delete(userId);
 
-        return ResponseEntity.ok()
-                .body(address.toDeleteDto());
+        return address.toDeleteDto();
 
     }
 
-    public ResponseEntity<DistanceResponse> getDistanceInfo(UUID addressId, UUID storeId) {
+    public DistanceResponse getDistanceInfo(UUID addressId, UUID storeId) {
         LocationInfo start = addressRepository.findById(addressId).orElseThrow().extractLocationInfo();
         LocationInfo target = LocationInfo.builder()
                 .address("서울특별시 종로구 새문안로5길 37 (도렴동)")
@@ -112,18 +106,19 @@ public class AddressServiceV1 {
                 .name("무봉리 토종순대국 광화문점")
                 .build();
         // TODO store 연동 되면 store charge 정보 가져와야함
+        // 이후에 요금 계산 정책이 복잡해 질 시에 계산 로직을 클래스로 분리
         int charge = 0;
         int distance = tmapApiClient.getDistance(start.getCoordinate(), target.getCoordinate());
         int time = tmapApiClient.getTime(start.getCoordinate(), target.getCoordinate());
         charge += (distance - 2000) / 1000 * 100;
 
-        return ResponseEntity.ok(DistanceResponse.builder()
+        return DistanceResponse.builder()
                 .start(start)
                 .target(target)
                 .charge(charge)
                 .distance(distance)
                 .time(time)
-                .build());
+                .build();
     }
 
 }

@@ -1,7 +1,7 @@
 package com.sparta.sparta_eats.address.infrastructure.api;
 
 import com.sparta.sparta_eats.address.domain.entity.Coordinate;
-import com.sparta.sparta_eats.address.infrastructure.api.dto.KakaoCoordinateResponse;
+import com.sparta.sparta_eats.address.infrastructure.api.dto.response.KakaoCoordinateResponse;
 import com.sparta.sparta_eats.global.domain.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,8 +35,8 @@ public class KakaoApiClient {
         KakaoCoordinateResponse.Document document = response.documents().get(0);
 
         return Coordinate.builder()
-                .addrLat(new BigDecimal(document.getY()))
-                .addrLng(new BigDecimal(document.getX()))
+                .addrLat(new BigDecimal(document.y()))
+                .addrLng(new BigDecimal(document.x()))
                 .build();
     }
 }
