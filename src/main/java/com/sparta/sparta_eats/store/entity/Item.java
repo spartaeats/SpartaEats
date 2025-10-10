@@ -2,7 +2,6 @@ package com.sparta.sparta_eats.store.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.apache.catalina.Store;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
