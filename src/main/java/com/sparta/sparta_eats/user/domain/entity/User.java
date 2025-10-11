@@ -76,4 +76,24 @@ public class User extends BaseEntity {
   public boolean isDeleted() {
     return this.deletedAt != null;
   }
+
+  public void updateInfo(String nickname, String email, String phone, Boolean isPublic) {
+    if (nickname != null) {
+      this.nickname = nickname;
+    }
+    if (email != null) {
+      this.email = email;
+    }
+    if (phone != null) {
+      this.phone = phone;
+    }
+    if (isPublic != null) {
+      this.isPublic = isPublic;
+    }
+  }
+
+  // ===== 👇 새로 추가되는 메서드 =====
+  public void changePassword(String newPassword) {
+    this.password = newPassword;
+  }
 }
