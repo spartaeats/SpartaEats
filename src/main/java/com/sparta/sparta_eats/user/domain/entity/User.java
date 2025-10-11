@@ -77,7 +77,6 @@ public class User extends BaseEntity {
     return this.deletedAt != null;
   }
 
-  // ===== 👇 새로 추가되는 메서드 =====
   public void updateInfo(String nickname, String email, String phone, Boolean isPublic) {
     if (nickname != null) {
       this.nickname = nickname;
@@ -91,5 +90,10 @@ public class User extends BaseEntity {
     if (isPublic != null) {
       this.isPublic = isPublic;
     }
+  }
+
+  // ===== 👇 새로 추가되는 메서드 =====
+  public void changePassword(String newPassword) {
+    this.password = newPassword;
   }
 }
