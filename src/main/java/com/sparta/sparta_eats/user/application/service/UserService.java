@@ -1,6 +1,7 @@
 package com.sparta.sparta_eats.user.application.service;
 
 import com.sparta.sparta_eats.global.domain.exception.BadRequestException;
+import com.sparta.sparta_eats.global.domain.exception.NotFoundException;
 import com.sparta.sparta_eats.global.infrastructure.config.security.JwtUtil;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import com.sparta.sparta_eats.user.infrastructure.repository.UserRepository;
@@ -87,5 +88,15 @@ public class UserService {
         token,
         UserResponse.from(user)
     );
+  }
+
+  // ===== 내 정보 조회 ===== 👈 이 부분이 새로 추가된 코드입니다!
+  public UserResponse getMyInfo(String userId) {
+    // 1. 사용자 조회 (삭제되지 않은 사용자만)
+    User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
+        .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+    // 2. 응답 생성
+    return UserResponse.from(user);
   }
 }
