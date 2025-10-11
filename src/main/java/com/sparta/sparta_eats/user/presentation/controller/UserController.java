@@ -2,9 +2,11 @@ package com.sparta.sparta_eats.user.presentation.controller;
 
 import com.sparta.sparta_eats.global.infrastructure.config.security.UserDetailsImpl;
 import com.sparta.sparta_eats.user.application.service.UserService;
+import com.sparta.sparta_eats.user.presentation.dto.request.UserUpdateRequest;
 import com.sparta.sparta_eats.user.presentation.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +26,16 @@ public class UserController {
   public ResponseEntity<UserResponse> getMyInfo(
       @AuthenticationPrincipal UserDetailsImpl userDetails) {
     UserResponse response = userService.getMyInfo(userDetails.getUsername());
+    return ResponseEntity.ok(response);
+  }
+
+  // ===== 👇 내 정보 수정 (새로 추가) =====
+  @Operation(summary = "내 정보 수정", description = "현재 로그인한 사용자의 정보를 수정합니다.")
+  @PatchMapping("/me")
+  public ResponseEntity<UserResponse> updateMyInfo(
+      @AuthenticationPrincipal UserDetailsImpl userDetails,
+      @Valid @RequestBody UserUpdateRequest request) {
+    UserResponse response = userService.updateMyInfo(userDetails.getUsername(), request);
     return ResponseEntity.ok(response);
   }
 }

@@ -7,6 +7,7 @@ import com.sparta.sparta_eats.user.domain.entity.User;
 import com.sparta.sparta_eats.user.infrastructure.repository.UserRepository;
 import com.sparta.sparta_eats.user.presentation.dto.request.LoginRequest;
 import com.sparta.sparta_eats.user.presentation.dto.request.SignupRequest;
+import com.sparta.sparta_eats.user.presentation.dto.request.UserUpdateRequest;
 import com.sparta.sparta_eats.user.presentation.dto.response.AuthResponse;
 import com.sparta.sparta_eats.user.presentation.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -90,13 +91,39 @@ public class UserService {
     );
   }
 
-  // ===== 내 정보 조회 ===== 👈 이 부분이 새로 추가된 코드입니다!
+  // ===== 내 정보 조회 =====
   public UserResponse getMyInfo(String userId) {
     // 1. 사용자 조회 (삭제되지 않은 사용자만)
     User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
         .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
     // 2. 응답 생성
+    return UserResponse.from(user);
+  }
+
+  // ===== 👇 사용자 정보 수정 (새로 추가) =====
+  @Transactional
+  public UserResponse updateMyInfo(String userId, UserUpdateRequest request) {
+    // 1. 사용자 조회
+    User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
+        .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+    // 2. 이메일 중복 체크 (변경하려는 경우만)
+    if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+      if (userRepository.existsByEmail(request.getEmail())) {
+        throw new BadRequestException("이미 존재하는 이메일입니다.");
+      }
+    }
+
+    // 3. 정보 업데이트
+    user.updateInfo(
+        request.getNickname(),
+        request.getEmail(),
+        request.getPhone(),
+        request.getIsPublic()
+    );
+
+    // 4. 응답 생성
     return UserResponse.from(user);
   }
 }
