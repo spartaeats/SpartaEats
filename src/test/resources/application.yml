@@ -24,6 +24,14 @@ logging:
     org.hibernate.SQL: debug
     org.hibernate.type.descriptor.sql.BasicBinder: trace
 
+kakao:
+  api-key: ${KAKAO_API_KEY:dummy-key-for-test}
+tmap:
+  api-key: ${TMAP_API_KEY:dummy-key-for-test}
 google:
   api:
-    key: ${GOOGLE_API_KEY}
+    key: ${GOOGLE_API_KEY:dummy-key-for-test}
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  expiration-time: ${JWT_EXPIRATION_TIME:86400000}  # 개발은 24시간으로 길게
