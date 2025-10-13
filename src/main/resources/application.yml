@@ -38,3 +38,9 @@ jwt:
 kakao:
   api-key: ${KAKAO_API_KEY:dummy-key-for-test}
 
+
+toss:
+  base-url: https://api.tosspayments.com
+  secret-key: ${TOSS_SECRET_KEY}
+  client-key: ${TOSS_CLIENT_KEY:}
+  mock-enabled: ${TOSS_MOCK:true} # 테스트/모의 전환용

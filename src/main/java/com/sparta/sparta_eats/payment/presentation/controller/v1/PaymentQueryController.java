@@ -1,4 +1,4 @@
-package com.sparta.sparta_eats.payment.controller.v1;
+package com.sparta.sparta_eats.payment.presentation.controller.v1;
 
 import com.sparta.sparta_eats.payment.application.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
