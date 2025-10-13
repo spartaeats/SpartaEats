@@ -1,4 +1,4 @@
-package com.sparta.sparta_eats.ai.infrastructure.api.dto;
+package com.sparta.sparta_eats.global.infrastructure.api.dto;
 
 import lombok.Builder;
 
@@ -7,5 +7,5 @@ import java.util.UUID;
 
 @Builder
 public record FindStoresRequest(UUID storeId,
-                                List<Object> reviewList) {
+                                List<String> reviewList) {
 }
