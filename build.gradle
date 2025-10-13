@@ -53,6 +53,10 @@ dependencies {
 
     // gemini api
     implementation 'com.google.genai:google-genai:1.0.0'
+
+    // reactive
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'io.projectreactor:reactor-core:3.7.2'
 }
 
 tasks.named('test') {

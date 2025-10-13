@@ -7,13 +7,16 @@ import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestCommentRequest;
 import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import com.sparta.sparta_eats.store.entity.Item;
 import com.sparta.sparta_eats.store.entity.ItemCategory;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.stream.IntStream;
 
+@Slf4j
 @SpringBootTest
 public class AiClientUnitTest {
     @Autowired
@@ -21,7 +24,7 @@ public class AiClientUnitTest {
 
     @Test
     void 리뷰_요약_테스트() {
-        String response = client.reviewSummary(
+        Mono<String> response = client.reviewSummary(
                 List.of(
                         // 긍정적인 리뷰
                         "여기 진짜 찐맛집이네요. 국물이 엄청 진하고 깊어서 해장 제대로 했습니다. 건더기도 푸짐해서 밥 한 공기 말아먹으니 배 터지는 줄 알았어요. 앞으로 순대국은 여기 정착합니다!",
@@ -59,8 +62,8 @@ public class AiClientUnitTest {
                         "전체적으로 만족하지만, 순대보다 내장이나 고기 부속물이 훨씬 많네요. 저는 순대를 더 좋아해서... 순대 많이 옵션이 있으면 좋겠어요.",
                         "음식은 훌륭합니다. 다만 최소주문금액이 좀 높은 것 같아 혼자 시켜 먹기에는 부담스럽네요. 1인 세트 메뉴 같은 게 있으면 더 자주 시킬 것 같아요."
                 ));
-
-        System.out.println(response);
+        String result = response.block();
+        System.out.println("#### summary result ####\n" + result);
     }
 
     @Test
@@ -113,7 +116,7 @@ public class AiClientUnitTest {
         List<UUID> res = new ArrayList<>();
         requests.forEach(request -> {
             try {
-                boolean response = client.getStoresWithKeyword("매운 짬뽕", request);
+                boolean response = Boolean.TRUE.equals(client.getStoresWithKeyword("매운 짬뽕", request).block());
                 if (response) {
                     res.add(request.storeId());
                 }
@@ -133,7 +136,7 @@ public class AiClientUnitTest {
                 .simpleDescription("가성비 좋은 돈까스")
                 .build();
 
-        System.out.println(client.suggestItemDescription(request));
+        System.out.println(client.suggestItemDescription(request).block());
     }
 
     @Test
@@ -146,6 +149,6 @@ public class AiClientUnitTest {
                 .itemList(List.of("순대국", "모듬순대"))
                 .build();
 
-        System.out.println(client.suggestComment(request));
+        System.out.println(client.suggestComment(request).block());
     }
 }
