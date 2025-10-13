@@ -1,6 +1,5 @@
-package com.sparta.sparta_eats.ai.infrastructure.api.dto;
+package com.sparta.sparta_eats.global.infrastructure.api.dto;
 
-import com.sparta.sparta_eats.store.entity.Review;
 import lombok.Builder;
 
 import java.util.List;

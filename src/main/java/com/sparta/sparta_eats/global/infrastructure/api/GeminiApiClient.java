@@ -1,14 +1,12 @@
-package com.sparta.sparta_eats.ai.infrastructure.api;
+package com.sparta.sparta_eats.global.infrastructure.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
-import com.google.genai.types.GenerateContentResponse;
-import com.sparta.sparta_eats.ai.infrastructure.api.dto.FindStoresRequest;
-import com.sparta.sparta_eats.ai.infrastructure.api.dto.GeminiResponse;
-import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestCommentRequest;
-import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestItemDescriptionRequest;
-import com.sparta.sparta_eats.store.entity.Review;
+import com.sparta.sparta_eats.global.infrastructure.api.dto.FindStoresRequest;
+import com.sparta.sparta_eats.global.infrastructure.api.dto.GeminiResponse;
+import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestCommentRequest;
+import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -18,7 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.UUID;
 
 @Component
 public class GeminiApiClient {
@@ -108,7 +106,7 @@ public class GeminiApiClient {
     }
 
     // TODO 파라미터로 상품 리스트를 받아야함
-    public Mono<String> getIllegalReviewsId(List<String> reviewList) {
+    public Mono<UUID> getIllegalReviewsId(List<String> reviewList) {
         StringBuilder builder = new StringBuilder();
         reviewList.forEach(content -> {
             builder.append(content);
@@ -142,7 +140,7 @@ public class GeminiApiClient {
                 .bodyValue(createRequestBody(prompt))
                 .retrieve()
                 .bodyToMono(GeminiResponse.class)
-                .map(geminiResponse -> geminiResponse.candidates().get(0).content().parts().get(0).text());
+                .map(geminiResponse -> UUID.fromString(geminiResponse.candidates().get(0).content().parts().get(0).text()));
     }
 
     public Mono<String> suggestItemDescription(SuggestItemDescriptionRequest request) {

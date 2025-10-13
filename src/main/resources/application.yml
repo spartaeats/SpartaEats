@@ -37,4 +37,9 @@ jwt:
 # 개발 과정에서는 dummy-key-for-test 사용중
 kakao:
   api-key: ${KAKAO_API_KEY:dummy-key-for-test}
+tmap:
+  api-key: ${TMAP_API_KEY:dummy-key-for-test}
+google:
+  api:
+    key: ${GOOGLE_API_KEY:dummy-key-for-test}
 
