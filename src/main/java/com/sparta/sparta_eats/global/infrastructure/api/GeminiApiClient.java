@@ -1,25 +1,28 @@
-package com.sparta.sparta_eats.ai.infrastructure.api;
+package com.sparta.sparta_eats.global.infrastructure.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
-import com.google.genai.types.GenerateContentResponse;
-import com.sparta.sparta_eats.ai.infrastructure.api.dto.FindStoresRequest;
-import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestCommentRequest;
-import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestItemDescriptionRequest;
-import com.sparta.sparta_eats.store.entity.Review;
+import com.sparta.sparta_eats.global.infrastructure.api.dto.FindStoresRequest;
+import com.sparta.sparta_eats.global.infrastructure.api.dto.GeminiResponse;
+import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestCommentRequest;
+import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import jakarta.annotation.PostConstruct;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Component
-@NoArgsConstructor
 public class GeminiApiClient {
     @Value("${google.api.key}")
     private String apiKey;
+    private final WebClient webClient;
     private Client client;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -28,7 +31,23 @@ public class GeminiApiClient {
         client = Client.builder().apiKey(apiKey).build();
     }
 
-    public String reviewSummary(List<String> reviewList) {
+
+    public GeminiApiClient(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder
+                .baseUrl("https://generativelanguage.googleapis.com")
+                .defaultHeader("x-goog-api-key", apiKey)
+                .build();
+    }
+
+    private Map<String, Object> createRequestBody(String prompt) {
+        return Map.of(
+                "contents", List.of(Map.of(
+                        "parts", List.of(Map.of("text", prompt))
+                ))
+        );
+    }
+
+    public Mono<String> reviewSummary(List<String> reviewList) {
         StringBuilder builder = new StringBuilder();
         reviewList.forEach(builder::append);
         String reviews = builder.toString();
@@ -40,19 +59,19 @@ public class GeminiApiClient {
                 "**중요: 마크다운, 글머리 기호(*, -), 번호 매기기, 별도의 항목 분류를 절대 사용하지 말고, 오직 줄 바꿈 없는 순수 텍스트로만 응답해야 합니다.** " +
                 "리뷰: " + reviews;
 
-        GenerateContentResponse response =
-                client.models.generateContent(
-                        "gemini-2.5-flash",
-                        prompt,
-                        null);
-
-        return response.text();
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1beta/models/gemini-2.5-flash:generateContent")
+                        .queryParam("key", apiKey)
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(createRequestBody(prompt))
+                .retrieve()
+                .bodyToMono(GeminiResponse.class)
+                .map(geminiResponse -> geminiResponse.candidates().get(0).content().parts().get(0).text());
     }
 
-    public boolean getStoresWithKeyword(String keyword, FindStoresRequest request) throws JsonProcessingException {
-        List<String> contentList = request.reviewList().stream()
-                .map(Review::getContent)
-                .toList();
+    public Mono<Boolean> getStoresWithKeyword(String keyword, FindStoresRequest request) throws JsonProcessingException {
         String prompt = "당신은 고객의 특정 키워드와 수많은 매장 리뷰 데이터를 분석하여, 고객의 요구에 가장 부합하는 매장을 찾아 추천하는 '매장 추천 전문가'이다.\n" +
                 "\n" +
                 "주어진 [사용자 키워드]와 [매장별 리뷰 데이터]를 면밀히 분석하세요.\n" +
@@ -68,27 +87,28 @@ public class GeminiApiClient {
                 "---\n" +
                 "\n" +
                 "[매장별 리뷰 데이터]\n" +
-                objectMapper.writeValueAsString(contentList) +
+                objectMapper.writeValueAsString(request.reviewList()) +
                 "\n" +
                 "---\n" +
                 "\n" +
                 "// 만약 키워드에 부합하는 매장이 없다면, false를 응답할 것.\n";
-        GenerateContentResponse response =
-                client.models.generateContent(
-                        "gemini-2.5-flash",
-                        prompt,
-                        null);
 
-        return Boolean.parseBoolean(response.text());
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1beta/models/gemini-2.5-flash:generateContent")
+                        .queryParam("key", apiKey)
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(createRequestBody(prompt))
+                .retrieve()
+                .bodyToMono(GeminiResponse.class)
+                .map(geminiResponse -> Boolean.parseBoolean(geminiResponse.candidates().get(0).content().parts().get(0).text()));
     }
 
     // TODO 파라미터로 상품 리스트를 받아야함
-    public String getIllegalReviewsId(List<Review> reviewList) {
-        List<String> contentList = reviewList.stream()
-                .map(Review::getContent)
-                .toList();
+    public Mono<UUID> getIllegalReviewsId(List<String> reviewList) {
         StringBuilder builder = new StringBuilder();
-        contentList.forEach(content -> {
+        reviewList.forEach(content -> {
             builder.append(content);
             builder.append("\n");
         });
@@ -111,16 +131,19 @@ public class GeminiApiClient {
                 "\n" +
                 "---\n" + totalReviews;
 
-        GenerateContentResponse response =
-                client.models.generateContent(
-                        "gemini-2.5-flash",
-                        prompt,
-                        null);
-
-        return response.text();
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1beta/models/gemini-2.5-flash:generateContent")
+                        .queryParam("key", apiKey)
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(createRequestBody(prompt))
+                .retrieve()
+                .bodyToMono(GeminiResponse.class)
+                .map(geminiResponse -> UUID.fromString(geminiResponse.candidates().get(0).content().parts().get(0).text()));
     }
 
-    public String suggestItemDescription(SuggestItemDescriptionRequest request) {
+    public Mono<String> suggestItemDescription(SuggestItemDescriptionRequest request) {
         String prompt = "너는 지금부터 대한민국 최고의 배달 음식 전문 카피라이터이다. 사장님이 입력한 아래의 최소 정보를 가지고, 고객의 침샘을 자극하고 '주문하기' 버튼을 누르게 만들 매력적인 메뉴 설명을 생성해야 한다.\n" +
                 "- 메뉴이름: " + request.name() +
                 "- 간단 설명: " + request.simpleDescription() +
@@ -131,16 +154,19 @@ public class GeminiApiClient {
                 "글의 형식: 2~3문장 정도의 짧고 임팩트 있는 단락으로 완성하라. 고객들은 긴 글을 읽지 않는다.\n" +
                 "금지 사항: 어려운 단어나 애매한 표현은 사용하지 마라. 누구나 쉽고 직관적으로 이해할 수 있어야 한다.";
 
-        GenerateContentResponse response =
-                client.models.generateContent(
-                        "gemini-2.5-flash",
-                        prompt,
-                        null);
-
-        return response.text();
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1beta/models/gemini-2.5-flash:generateContent")
+                        .queryParam("key", apiKey)
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(createRequestBody(prompt))
+                .retrieve()
+                .bodyToMono(GeminiResponse.class)
+                .map(geminiResponse -> geminiResponse.candidates().get(0).content().parts().get(0).text());
     }
 
-    public String suggestComment(SuggestCommentRequest request) {
+    public Mono<String> suggestComment(SuggestCommentRequest request) {
         StringBuilder builder = new StringBuilder();
         request.itemList().forEach(item -> {
             builder.append(item);
@@ -206,12 +232,15 @@ public class GeminiApiClient {
                 "짧은 리뷰라도 \"맛있게 드셨다니 저희가 더 기쁩니다!\" 와 같이 따뜻한 감정을 담아 답글을 작성한다.\n" +
                 "\n";
 
-        GenerateContentResponse response =
-                client.models.generateContent(
-                        "gemini-2.5-flash",
-                        prompt,
-                        null);
-
-        return response.text();
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1beta/models/gemini-2.5-flash:generateContent")
+                        .queryParam("key", apiKey)
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(createRequestBody(prompt))
+                .retrieve()
+                .bodyToMono(GeminiResponse.class)
+                .map(geminiResponse -> geminiResponse.candidates().get(0).content().parts().get(0).text());
     }
 }
