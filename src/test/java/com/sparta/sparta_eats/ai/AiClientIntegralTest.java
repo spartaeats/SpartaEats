@@ -7,6 +7,7 @@ import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestCommentReques
 import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,22 +21,11 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 @Slf4j
-@EnableRetry
+@Tag("ai_integration")
 @SpringBootTest
 public class AiClientIntegralTest {
     @Autowired
     GeminiApiClient client;
-
-    @BeforeEach
-    void setup() throws InterruptedException {
-        Thread.sleep(1000);
-    }
-
-    @Retryable(
-            value = WebClientResponseException.TooManyRequests.class, // TooManyRequests 오류 발생 시에만
-            maxAttempts = 3, // 최대 3번까지 재시도
-            backoff = @Backoff(delay = 2000) // 재시도하기 전에 2초(2000ms) 대기
-    )
 
     @Test
     void 리뷰_요약_테스트() {
