@@ -33,5 +33,5 @@ google:
     key: ${GOOGLE_API_KEY:dummy-key-for-test}
 
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
+  secret-key: ${JWT_SECRET_KEY:dummy-key-for-test}
   expiration-time: ${JWT_EXPIRATION_TIME:86400000}  # 개발은 24시간으로 길게
