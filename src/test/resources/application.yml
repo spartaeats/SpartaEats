@@ -18,6 +18,8 @@ spring:
 
   main:
     banner-mode: "off"
+  profiles:
+    default: test
 
 logging:
   level:
