@@ -6,15 +6,10 @@ import com.sparta.sparta_eats.global.infrastructure.api.dto.FindStoresRequest;
 import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestCommentRequest;
 import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.EnableRetry;
-import org.springframework.retry.annotation.Retryable;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
