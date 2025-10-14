@@ -6,6 +6,7 @@ import com.sparta.sparta_eats.global.infrastructure.api.dto.FindStoresRequest;
 import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestCommentRequest;
 import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +20,11 @@ import java.util.stream.IntStream;
 public class AiClientIntegralTest {
     @Autowired
     GeminiApiClient client;
+
+    @BeforeEach
+    void setup() throws InterruptedException {
+        Thread.sleep(1000);
+    }
 
     @Test
     void 리뷰_요약_테스트() {
