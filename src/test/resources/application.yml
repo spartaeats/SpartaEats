@@ -16,6 +16,10 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
 
+  sql:
+    init:
+      mode: never
+
   main:
     banner-mode: "off"
 
