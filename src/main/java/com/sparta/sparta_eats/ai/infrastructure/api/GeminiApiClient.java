@@ -64,6 +64,7 @@ public class GeminiApiClient {
                 .map(geminiResponse -> geminiResponse.candidates().get(0).content().parts().get(0).text());
     }
 
+    // TODO 매장 리스트를 매개변수로 받기
     public Mono<Boolean> getStoresWithKeyword(String keyword, FindStoresRequest request) throws JsonProcessingException {
         String prompt = "당신은 고객의 특정 키워드와 수많은 매장 리뷰 데이터를 분석하여, 고객의 요구에 가장 부합하는 매장을 찾아 추천하는 '매장 추천 전문가'이다.\n" +
                 "\n" +
