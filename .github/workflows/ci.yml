@@ -33,20 +33,12 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
-    - name: Check Environment Variables
-      run: |
-        if [ -z "${{ secrets.GOOGLE_API_KEY }}" ]; then
-          echo "GOOGLE_API_KEY secret is NOT set!"
-          exit 1
-        else
-          echo "GOOGLE_API_KEY secret is set."
-          # 키의 실제 값을 노출하지 않고, 존재 여부와 길이만 확인
-          echo "API Key length: $(echo -n ${{ secrets.GOOGLE_API_KEY }} | wc -c)"
-        fi
-
     - name: Build with Gradle Wrapper
       env:
         GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        KAKAO_API_KEY: ${{ secrets.KAKAO_API_KEY }}
+        TMAP_API_KEY: ${{ secrets.TMAP_API_KEY }}
+        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
       run: ./gradlew build
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
