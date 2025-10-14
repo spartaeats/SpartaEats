@@ -16,7 +16,7 @@ import java.util.stream.IntStream;
 
 @Slf4j
 @SpringBootTest
-public class AiClientUnitTest {
+public class AiClientIntegralTest {
     @Autowired
     GeminiApiClient client;
 
