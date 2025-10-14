@@ -30,7 +30,7 @@ tmap:
   api-key: ${TMAP_API_KEY:dummy-key-for-test}
 google:
   api:
-    key: ${GOOGLE_API_KEY:dummy-key-for-test}
+    key: ${GOOGLE_API_KEY}
 
 jwt:
   secret-key: ${JWT_SECRET_KEY:dummy-key-for-test}
