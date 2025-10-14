@@ -13,8 +13,12 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
+
+  sql:
+    init:
+      mode: never
 
   main:
     banner-mode: "off"
@@ -25,12 +29,12 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: trace
 
 kakao:
-  api-key: ${KAKAO_API_KEY:dummy-key-for-test}
+  api-key: ${KAKAO_API_KEY}
 tmap:
-  api-key: ${TMAP_API_KEY:dummy-key-for-test}
+  api-key: ${TMAP_API_KEY}
 google:
   api:
-    key: ${GOOGLE_API_KEY:dummy-key-for-test}
+    key: ${GOOGLE_API_KEY}
 
 jwt:
   secret-key: ${JWT_SECRET_KEY}
