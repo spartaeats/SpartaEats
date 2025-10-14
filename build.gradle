@@ -60,8 +60,9 @@ dependencies {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
-    excludeTags 'ai_integration'
+    useJUnitPlatform {
+        excludeTags 'ai_integration'
+    }
 }
 
 def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
