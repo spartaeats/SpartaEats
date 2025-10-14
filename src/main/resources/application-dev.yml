@@ -6,17 +6,28 @@ spring:
     url: jdbc:h2:mem:testdb
     username: sa
     password:
+    driver-class-name: org.h2.Driver
 
   h2:
     console:
       enabled: true
       path: /h2-console
+
   jpa:
     open-in-view: false
+    defer-datasource-initialization: true  # 🆕 추가!
     hibernate:
       ddl-auto: create
     properties:
-      hibernate.format_sql: true
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect  # 🆕 추가!
+
+  sql:  # 🆕 전체 섹션 추가!
+    init:
+      mode: always
+      encoding: UTF-8
+      data-locations: classpath:data.sql
 
 logging:
   level:
@@ -24,9 +35,7 @@ logging:
     org.hibernate.orm.jdbc.bind: trace
 
 server:
-  port: ${PORT:8080}
-#  servlet:
-#    context-path: /v1
+  port: 8080
 
 springdoc:
   swagger-ui:
@@ -38,16 +47,14 @@ app:
     allowed-sizes: [10, 30, 50]
     one-indexed: true
 
-# JWT 설정 (개발환경 오버라이드)
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
-  expiration-time: ${JWT_EXPIRATION_TIME:86400000}  # 개발은 24시간으로 길게
+  secret-key: c3BhcnRhZWF0cy1qd3Qtc2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtbWluaW11bS0yNTYtYml0cw==
+  expiration-time: 86400000
 
-# 개발 과정에서는 dummy-key-for-test 사용중
 kakao:
-  api-key: ${KAKAO_API_KEY:dummy-key-for-test}
+  api-key: dummy-key-for-test
 tmap:
-  api-key: ${TMAP_API_KEY:dummy-key-for-test}
+  api-key: dummy-key-for-test
 google:
   api:
-    key: ${GOOGLE_API_KEY:dummy-key-for-test}
+    key: dummy-key-for-test
