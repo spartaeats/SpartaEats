@@ -1,13 +1,11 @@
-package com.sparta.sparta_eats.global.infrastructure.api;
+package com.sparta.sparta_eats.ai.infrastructure.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.genai.Client;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.FindStoresRequest;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.GeminiResponse;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestCommentRequest;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestItemDescriptionRequest;
-import jakarta.annotation.PostConstruct;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.FindStoresRequest;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.GeminiResponse;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestCommentRequest;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;

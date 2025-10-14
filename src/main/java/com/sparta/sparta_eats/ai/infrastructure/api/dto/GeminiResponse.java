@@ -1,4 +1,4 @@
-package com.sparta.sparta_eats.global.infrastructure.api.dto;
+package com.sparta.sparta_eats.ai.infrastructure.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;

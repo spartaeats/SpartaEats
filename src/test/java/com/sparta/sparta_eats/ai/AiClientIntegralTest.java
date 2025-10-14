@@ -1,10 +1,10 @@
 package com.sparta.sparta_eats.ai;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.sparta.sparta_eats.global.infrastructure.api.GeminiApiClient;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.FindStoresRequest;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestCommentRequest;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestItemDescriptionRequest;
+import com.sparta.sparta_eats.ai.infrastructure.api.GeminiApiClient;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.FindStoresRequest;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestCommentRequest;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

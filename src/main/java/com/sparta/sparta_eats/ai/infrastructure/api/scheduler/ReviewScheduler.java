@@ -1,6 +1,6 @@
-package com.sparta.sparta_eats.global.infrastructure.schedule;
+package com.sparta.sparta_eats.ai.infrastructure.api.scheduler;
 
-import com.sparta.sparta_eats.global.infrastructure.api.GeminiApiClient;
+import com.sparta.sparta_eats.ai.infrastructure.api.GeminiApiClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
