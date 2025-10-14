@@ -20,22 +20,17 @@ import java.util.UUID;
 
 @Component
 public class GeminiApiClient {
-    @Value("${google.api.key}")
-    private String apiKey;
+    private final String apiKey;
     private final WebClient webClient;
-    private Client client;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @PostConstruct
-    public void init() {
-        client = Client.builder().apiKey(apiKey).build();
-    }
 
-
-    public GeminiApiClient(WebClient.Builder webClientBuilder) {
+    public GeminiApiClient(WebClient.Builder webClientBuilder,
+                           @Value("${google.api.key}") String apiKey) {
+        this.apiKey = apiKey;
         this.webClient = webClientBuilder
                 .baseUrl("https://generativelanguage.googleapis.com")
-                .defaultHeader("x-goog-api-key", apiKey)
+                .defaultHeader("x-goog-api-key", this.apiKey)
                 .build();
     }
 
