@@ -6,6 +6,7 @@ import com.sparta.sparta_eats.global.infrastructure.api.dto.FindStoresRequest;
 import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestCommentRequest;
 import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,8 +16,9 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 @Slf4j
+@Tag("ai_integration")
 @SpringBootTest
-public class AiClientUnitTest {
+public class AiClientIntegralTest {
     @Autowired
     GeminiApiClient client;
 
