@@ -45,4 +45,9 @@ public class CartItem extends BaseEntity {
   @OneToMany(mappedBy = "cartItem", cascade = CascadeType.ALL, orphanRemoval = true)
   @Builder.Default
   private Set<CartItemOption> options = new HashSet<>();
+
+  // 간단한 수량 증가 메서드
+  public void increaseQuantity(int amount) {
+    this.quantity += amount;
+  }
 }

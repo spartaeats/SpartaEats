@@ -27,7 +27,7 @@ public class Cart extends BaseEntity {
   private String userId;
 
   @Column(name = "store_id", nullable = false)
-  private Long storeId;
+  private UUID storeId;
 
   @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
   @Builder.Default
