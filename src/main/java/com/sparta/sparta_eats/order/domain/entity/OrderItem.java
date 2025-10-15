@@ -38,11 +38,11 @@ public class OrderItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_order_item_product"))
-    private Item product;
+    private Item item;
 
     /** 상품명 스냅샷 */
     @Column(name = "product_name", nullable = false, length = 255)
-    private String productName;
+    private String itemName;
 
     /** 썸네일 이미지 URL (nullable) */
     @Column(name = "thumbnail_url", length = 500)
@@ -70,14 +70,14 @@ public class OrderItem extends BaseEntity {
 
     // ===== Builder =====
     @Builder
-    public OrderItem(Order order, Item product,
-                     String productName, String thumbnailUrl,
+    public OrderItem(Order order, Item item,
+                     String itemName, String thumbnailUrl,
                      BigInteger unitPrice, Integer quantity,
                      BigInteger optionTotal, String optionComboHash) {
 
         this.order = order;
-        this.product = product;
-        this.productName = productName;
+        this.item = item;
+        this.itemName = itemName;
         this.thumbnailUrl = thumbnailUrl;
 
         this.unitPrice = nvl(unitPrice);
@@ -122,8 +122,8 @@ public class OrderItem extends BaseEntity {
     @PrePersist @PreUpdate
     private void validate() {
         if (order == null) throw new IllegalStateException("주문 정보가 없습니다.");
-        if (product == null) throw new IllegalStateException("상품 정보가 없습니다.");
-        if (productName == null || productName.isBlank()) throw new IllegalStateException("상품명이 없습니다.");
+        if (item == null) throw new IllegalStateException("상품 정보가 없습니다.");
+        if (itemName == null || itemName.isBlank()) throw new IllegalStateException("상품명이 없습니다.");
         if (unitPrice == null || unitPrice.compareTo(BigInteger.ZERO) < 0)
             throw new IllegalStateException("상품 단가가 잘못되었습니다.");
         if (quantity == null || quantity < 1)

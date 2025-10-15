@@ -1,6 +1,12 @@
 package com.sparta.sparta_eats.order.domain.entity;
 
+import com.sparta.sparta_eats.address.domain.dto.AddressSupplyDto;
+import com.sparta.sparta_eats.address.domain.entity.Address;
+import com.sparta.sparta_eats.address.domain.entity.Coordinate;
+import com.sparta.sparta_eats.address.presentation.dto.response.AddressResponseV1;
 import com.sparta.sparta_eats.global.entity.BaseEntity;
+import com.sparta.sparta_eats.order.domain.dto.OrderSnapshotDto;
+import com.sparta.sparta_eats.order.presentation.dto.request.OrderCreateRequest;
 import com.sparta.sparta_eats.store.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
@@ -71,9 +77,11 @@ public class Order extends BaseEntity {
     @Column(name = "contact_phone", length = 13)
     private String contactPhone;
 
+    // discuss riderCode는 주소의 memo로 저장
     @Column(name = "request_to_rider_code", length = 30)
     private String requestToRiderCode;
 
+    // discuss riderText는 주문시 받는 사항
     @Column(name = "request_to_rider_text", length = 255)
     private String requestToRiderText;
 
@@ -94,14 +102,12 @@ public class Order extends BaseEntity {
     @Column(name = "addr_detail", length = 255)
     private String addrDetail;
 
+    // TODO 우편번호는 필요 없다고 판단 우선 제외 후 상의
     @Column(name = "addr_postal_code", length = 10)
     private String addrPostalCode;
 
-    @Column(name = "addr_lat")
-    private Double addrLat;
-
-    @Column(name = "addr_lng")
-    private Double addrLng;
+    @Embedded
+    private Coordinate coordinate;
 
     // ===== 취소 관련 =====
     @Column(name = "canceled_at")
@@ -112,12 +118,16 @@ public class Order extends BaseEntity {
 
     // ===== Builder =====
     @Builder
-    public Order(User user, Store store, FulfillmentType fulfillmentType, String contactPhone) {
+    public Order(User user, Store store, FulfillmentType fulfillmentType, String contactPhone, Boolean noCutlery, Boolean noSideDish, String memoToOwner, String memoToRider) {
         this.user = user;
         this.store = store;
         this.fulfillmentType = (fulfillmentType != null) ? fulfillmentType : FulfillmentType.DELIVERY;
         this.contactPhone = contactPhone;
         this.orderNo = generateOrderNo();
+        this.requestToRiderText = memoToRider;
+        this.requestToStoreText = memoToOwner;
+        this.noCutlery = noCutlery;
+        this.noSideDish = noSideDish;
     }
 
     // ===== 주문번호 자동 생성 =====
@@ -158,5 +168,21 @@ public class Order extends BaseEntity {
         if (user == null) throw new IllegalStateException("주문자 정보가 없습니다.");
         if (store == null) throw new IllegalStateException("매장 정보가 없습니다.");
         if (orderNo == null) this.orderNo = generateOrderNo();
+    }
+
+    // ===== Entity 할당 메서드 =====
+    public void assignAddress(AddressSupplyDto supplyDto) {
+        addrRoad = supplyDto.addrRoad();
+        addrDetail = supplyDto.addrDetail();
+        coordinate = supplyDto.coordinate();
+        requestToRiderCode = supplyDto.memo();
+    }
+
+    // ===== 스냅샷 할당 메서드 =====
+    public void assignItemSnapshot(OrderSnapshotDto snapshotDto) {
+        itemTotal = snapshotDto.itemTotal();
+        deliveryFee = snapshotDto.deliveryFee();
+        discountTotal = snapshotDto.discountTotal();
+        totalAmount = snapshotDto.totalAmount();
     }
 }
