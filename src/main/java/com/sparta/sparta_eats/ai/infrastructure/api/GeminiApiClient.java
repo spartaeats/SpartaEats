@@ -1,16 +1,17 @@
-package com.sparta.sparta_eats.global.infrastructure.api;
+package com.sparta.sparta_eats.ai.infrastructure.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.genai.Client;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.FindStoresRequest;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.GeminiResponse;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestCommentRequest;
-import com.sparta.sparta_eats.global.infrastructure.api.dto.SuggestItemDescriptionRequest;
-import jakarta.annotation.PostConstruct;
+import com.sparta.sparta_eats.ai.domain.exception.GeminiOverloadException;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.FindStoresRequest;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.GeminiResponse;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestCommentRequest;
+import com.sparta.sparta_eats.ai.infrastructure.api.dto.SuggestItemDescriptionRequest;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -64,8 +65,10 @@ public class GeminiApiClient {
                 .retrieve()
                 .bodyToMono(GeminiResponse.class)
                 .map(geminiResponse -> geminiResponse.candidates().get(0).content().parts().get(0).text());
+
     }
 
+    // TODO 매장 리스트를 매개변수로 받기
     public Mono<Boolean> getStoresWithKeyword(String keyword, FindStoresRequest request) throws JsonProcessingException {
         String prompt = "당신은 고객의 특정 키워드와 수많은 매장 리뷰 데이터를 분석하여, 고객의 요구에 가장 부합하는 매장을 찾아 추천하는 '매장 추천 전문가'이다.\n" +
                 "\n" +
