@@ -1,19 +1,18 @@
 package com.sparta.sparta_eats.order.domain.entity;
 
 import com.sparta.sparta_eats.address.domain.dto.AddressSupplyDto;
-import com.sparta.sparta_eats.address.domain.entity.Address;
 import com.sparta.sparta_eats.address.domain.entity.Coordinate;
-import com.sparta.sparta_eats.address.presentation.dto.response.AddressResponseV1;
 import com.sparta.sparta_eats.global.entity.BaseEntity;
 import com.sparta.sparta_eats.order.domain.dto.OrderSnapshotDto;
-import com.sparta.sparta_eats.order.presentation.dto.request.OrderCreateRequest;
 import com.sparta.sparta_eats.store.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.UuidGenerator;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -53,16 +52,16 @@ public class Order extends BaseEntity {
 
     // ===== 금액(스냅샷) =====
     @Column(name = "item_total", nullable = false)
-    private BigInteger itemTotal = BigInteger.ZERO;
+    private BigDecimal itemTotal = BigDecimal.ZERO;
 
     @Column(name = "delivery_fee", nullable = false)
-    private BigInteger deliveryFee = BigInteger.ZERO;
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
 
     @Column(name = "discount_total", nullable = false)
-    private BigInteger discountTotal = BigInteger.ZERO;
+    private BigDecimal discountTotal = BigDecimal.ZERO;
 
     @Column(name = "total_amount", nullable = false)
-    private BigInteger totalAmount = BigInteger.ZERO;
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     // ===== 상태 =====
     @Enumerated(EnumType.STRING)
@@ -143,11 +142,11 @@ public class Order extends BaseEntity {
     }
 
     // ===== ENUM =====
-    public enum FulfillmentType { DELIVERY, PICKUP }
+    public enum FulfillmentType {DELIVERY, PICKUP}
 
-    public enum OrderStatus { PLACED, CONFIRMED, COOKING, DELIVERY, COMPLETED, CANCELED }
+    public enum OrderStatus {PLACED, CONFIRMED, COOKING, DELIVERY, COMPLETED, CANCELED}
 
-    public enum PaymentStatus { PENDING, AUTHORIZED, PAID, REFUNDED, FAILED }
+    public enum PaymentStatus {PENDING, AUTHORIZED, PAID, REFUNDED, FAILED}
 
     // ===== 중복 생기지 않도록 Lombok의 @EqualsAndHashCode를 쓰면 위험(엔티티끼리 무한순환생길수있다함)=====
     @Override

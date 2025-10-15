@@ -2,11 +2,11 @@ package com.sparta.sparta_eats.order.domain.dto;
 
 import lombok.Builder;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 
 @Builder
-public record OrderSnapshotDto(BigInteger itemTotal,
-                               BigInteger deliveryFee,
-                               BigInteger discountTotal,
-                               BigInteger totalAmount) {
+public record OrderSnapshotDto(BigDecimal itemTotal,
+                               BigDecimal deliveryFee,
+                               BigDecimal discountTotal,
+                               BigDecimal totalAmount) {
 }
