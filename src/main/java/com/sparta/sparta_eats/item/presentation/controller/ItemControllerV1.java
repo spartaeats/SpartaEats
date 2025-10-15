@@ -21,6 +21,7 @@ public class ItemControllerV1 {
 
 	private final ItemServiceV1 itemService;
 
+	//매장별 상품 등록
 	@PostMapping("/stores/{storeId}/items")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER', 'OWNER')")
 	public ResponseEntity<ResItemDtoV1> createItem(
@@ -30,6 +31,7 @@ public class ItemControllerV1 {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
+	//매장별 상품 조회
 	@GetMapping("/stores/{storeId}/items")
 	@PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'MASTER', 'OWNER')")
 	public ResponseEntity<Page<ResItemDtoV1>> getItemsByStore(
@@ -39,6 +41,7 @@ public class ItemControllerV1 {
 		return ResponseEntity.ok(response);
 	}
 
+	//상품 전체 조회
 	@GetMapping("/items")
 	@PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'MASTER', 'OWNER')")
 	public ResponseEntity<Page<ResItemDtoV1>> getAllItems(Pageable pageable) {
@@ -46,6 +49,7 @@ public class ItemControllerV1 {
 		return ResponseEntity.ok(response);
 	}
 
+	//상품 단건 조회
 	@GetMapping("/items/{itemId}")
 	@PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'MASTER', 'OWNER')")
 	public ResponseEntity<ResItemDtoV1> getItemById(@PathVariable String itemId) {
@@ -53,6 +57,7 @@ public class ItemControllerV1 {
 		return ResponseEntity.ok(response);
 	}
 
+	//상품 수정
 	@PatchMapping("/items/{itemId}")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER', 'OWNER')")
 	public ResponseEntity<ResItemDtoV1> updateItem(
@@ -62,6 +67,7 @@ public class ItemControllerV1 {
 		return ResponseEntity.ok(response);
 	}
 
+	//상품 삭제 Soft Delete
 	@DeleteMapping("/items/{itemId}")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER', 'OWNER')")
 	public ResponseEntity<Void> deleteItem(@PathVariable String itemId) {
