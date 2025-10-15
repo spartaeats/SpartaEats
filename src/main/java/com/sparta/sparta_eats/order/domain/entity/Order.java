@@ -1,6 +1,7 @@
 package com.sparta.sparta_eats.order.domain.entity;
 
 import com.sparta.sparta_eats.global.entity.BaseEntity;
+import com.sparta.sparta_eats.payment.domain.model.PaymentStatus;
 import com.sparta.sparta_eats.store.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
@@ -137,7 +138,7 @@ public class Order extends BaseEntity {
 
     public enum OrderStatus { PLACED, CONFIRMED, COOKING, DELIVERY, COMPLETED, CANCELED }
 
-    public enum PaymentStatus { PENDING, AUTHORIZED, PAID, REFUNDED, FAILED }
+
 
     // ===== 중복 생기지 않도록 Lombok의 @EqualsAndHashCode를 쓰면 위험(엔티티끼리 무한순환생길수있다함)=====
     @Override

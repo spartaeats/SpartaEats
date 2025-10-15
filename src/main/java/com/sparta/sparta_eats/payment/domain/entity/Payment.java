@@ -11,7 +11,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 import org.hibernate.type.SqlTypes;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -45,8 +45,8 @@ public class Payment extends PaymentSoftDeletable {
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID orderId;
 
-    @Column(name = "amount", nullable = false, precision = 15, scale = 2)
-    private BigDecimal amount;
+    @Column(name = "amount", nullable = false, precision = 19, scale = 0)
+    private BigInteger amount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "method", nullable = false, length = 20)
