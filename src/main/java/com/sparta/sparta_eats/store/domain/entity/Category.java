@@ -1,4 +1,4 @@
-package com.sparta.sparta_eats.store.entity;
+package com.sparta.sparta_eats.store.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

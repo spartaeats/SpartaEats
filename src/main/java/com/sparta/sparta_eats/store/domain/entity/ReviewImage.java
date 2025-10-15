@@ -1,25 +1,22 @@
-package com.sparta.sparta_eats.store.entity;
+package com.sparta.sparta_eats.store.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "p_reply")
+@Table(name = "p_review_image")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Reply {
+public class ReviewImage {
     @Id
     @Column(name = "id", columnDefinition = "UUID")
     private String id;
 
-    @Column(name = "content", columnDefinition = "VARCHAR(300)")
-    private String content;
-
-    @Column(name = "username", nullable = false, length = 100)
-    private String username;
+    @Column(name = "image", nullable = false, length = 255)
+    private String image;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_id", nullable = false)
