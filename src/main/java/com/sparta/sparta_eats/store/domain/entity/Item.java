@@ -1,5 +1,6 @@
-package com.sparta.sparta_eats.store.entity;
+package com.sparta.sparta_eats.store.domain.entity;
 
+import com.sparta.sparta_eats.store.domain.entity.ItemCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.catalina.Store;
