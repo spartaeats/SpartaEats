@@ -142,6 +142,14 @@ public class Order extends BaseEntity {
         this.cancelReason = reason;
     }
 
+    // ===== 주문 상태 변경 =====
+    public void updateStatus(OrderStatus newStatus) {
+        if (newStatus == null) {
+            throw new IllegalArgumentException("상태는 null일 수 없습니다.");
+        }
+        this.status = newStatus;
+    }
+
     // ===== ENUM =====
     public enum FulfillmentType { DELIVERY, PICKUP }
 

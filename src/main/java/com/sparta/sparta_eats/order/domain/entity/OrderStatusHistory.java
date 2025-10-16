@@ -24,9 +24,9 @@ public class OrderStatusHistory extends BaseEntity {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    /** 변경 주체 ID (user.user_id, BIGINT) */
-    @Column(name = "actor_id", nullable = false)
-    private Long actorId;
+    /** 변경 주체 ID (user.user_id, VARCHAR) */
+    @Column(name = "actor_id", nullable = false, length = 20)
+    private String actorId;
 
     /** 변경 주체 역할(스냅샷) */
     @Column(name = "actor_role", nullable = false, length = 20)
@@ -43,10 +43,10 @@ public class OrderStatusHistory extends BaseEntity {
 
     @Builder
     private OrderStatusHistory(Order order,
-                               Long actorId,
-                               String actorRole,
-                               OrderStatus status,
-                               String cancelReason) {
+        String actorId,
+        String actorRole,
+        OrderStatus status,
+        String cancelReason) {
         this.order = Objects.requireNonNull(order, "주문 정보는 비어 있을 수 없습니다.");
         this.actorId = Objects.requireNonNull(actorId, "변경 주체 ID는 비어 있을 수 없습니다.");
         this.actorRole = Objects.requireNonNull(actorRole, "변경 주체 역할은 비어 있을 수 없습니다.");
