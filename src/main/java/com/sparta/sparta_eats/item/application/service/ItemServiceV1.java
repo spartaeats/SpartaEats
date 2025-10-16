@@ -7,7 +7,7 @@ import com.sparta.sparta_eats.item.presentation.dto.request.ReqItemUpdateDtoV1;
 import com.sparta.sparta_eats.item.presentation.dto.response.ResItemDtoV1;
 import com.sparta.sparta_eats.store.domain.entity.ItemCategory;
 import com.sparta.sparta_eats.store.domain.entity.Store;
-import com.sparta.sparta_eats.store.domain.repository.CategoryRepository;
+import com.sparta.sparta_eats.store.domain.repository.ItemCategoryRepository;
 import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
 
 import lombok.RequiredArgsConstructor;
