@@ -41,8 +41,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderRepository orderRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
 
-    private final TossPaymentsClient tossClient;  // mock 모드에서도 주입 유지
-    private final TossProperties tossProps;       // 추후 실연동 분기용
+    private final TossPaymentsClient tossClient;
+    private final TossProperties tossProps;
 
     private static final int IDEMPOTENCY_TTL_MINUTES = 10;
 
@@ -57,7 +57,7 @@ public class PaymentServiceImpl implements PaymentService {
         var existingPayment = paymentRepository.findByIdempotencyKey(idempotencyKey);
         if (existingPayment.isPresent()) {
             saveLog(existingPayment.get().getId(), PaymentEventType.REQUEST, 200,
-                    "{\"idempotency\":\"hit\"}", "{\"result\":\"existing\"}");
+                "{\"idempotency\":\"hit\"}", "{\"result\":\"existing\"}");
             return existingPayment.get().getId();
         }
 
@@ -69,7 +69,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         // (3) 주문 조회 + 보안/금액 검증
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다: " + orderId));
+            .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다: " + orderId));
 
         // 주문자 일치 (Order.user.userId vs 요청 userId)
         String orderUserId = (order.getUser() != null) ? order.getUser().getUserId() : null;
@@ -77,19 +77,19 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BadRequestException("주문자와 결제 요청자의 정보가 일치하지 않습니다.");
         }
 
-        // 금액 일치 (Order.totalAmount(BigInteger) → BigDecimal 변환 메서드 사용 가정)
+        // 금액 일치
         if (order.getTotalAmount() == null || amount.compareTo(order.getTotalAmount()) != 0) {
             throw new BadRequestException("요청 금액이 주문 총액과 일치하지 않습니다.");
         }
 
         // (4) 결제 생성
         Payment payment = Payment.builder()
-                .orderId(order.getId())
-                .userId(userId) // String
-                .amount(amount)
-                .method(PaymentMethod.CARD)
-                .status(PaymentStatus.PENDING)
-                .build();
+            .orderId(order.getId())
+            .userId(userId)
+            .amount(amount)
+            .method(PaymentMethod.CARD)
+            .status(PaymentStatus.PENDING)
+            .build();
         payment.markRequested(idempotencyKey);
         paymentRepository.save(payment);
 
@@ -102,8 +102,8 @@ public class PaymentServiceImpl implements PaymentService {
 
         // (6) 로그
         saveLog(payment.getId(), PaymentEventType.REQUEST, 200,
-                jsonOf(Map.of("orderId", orderId, "userId", userId, "amount", amount.toString(), "idempotencyKey", idempotencyKey)),
-                "{\"result\":\"created\"}");
+            jsonOf(Map.of("orderId", orderId, "userId", userId, "amount", amount.toString(), "idempotencyKey", idempotencyKey)),
+            "{\"result\":\"created\"}");
 
         return payment.getId();
     }
@@ -114,37 +114,38 @@ public class PaymentServiceImpl implements PaymentService {
         if (paymentKey == null || paymentKey.isBlank()) throw new BadRequestException("paymentKey 누락");
 
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("결제를 찾을 수 없습니다: " + paymentId));
+            .orElseThrow(() -> new EntityNotFoundException("결제를 찾을 수 없습니다: " + paymentId));
 
         Order order = orderRepository.findById(payment.getOrderId())
-                .orElseThrow(() -> new EntityNotFoundException("결제에 연결된 주문을 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("결제에 연결된 주문을 찾을 수 없습니다."));
 
         // --- Mock 승인 응답 ---
         Map<String, Object> mockResp = Map.of(
-                "paymentKey", paymentKey,
-                "orderId", order.getId().toString(),
-                "approvedAt", LocalDateTime.now().toString(),
-                "amount", payment.getAmount().toString()
+            "paymentKey", paymentKey,
+            "orderId", order.getId().toString(),
+            "approvedAt", LocalDateTime.now().toString(),
+            "amount", payment.getAmount().toString()
         );
 
         // 결제 상태 전이
-        payment.confirm(paymentKey); // PENDING -> CONFIRMED (+ confirmedAt)
+        payment.confirm(paymentKey);
 
         // 주문 상태/결제상태 반영 + 이력
-        order.markPaymentPaid(); // paymentStatus = PAID, status = CONFIRMED(팀 룰)
-        Long actorId = parseLongOrNull((order.getUser() != null) ? order.getUser().getUserId() : null);
+        order.markPaymentPaid();
+
+        String actorId = (order.getUser() != null) ? order.getUser().getUserId() : "SYSTEM";
         OrderStatusHistory hist = order.toStatusHistory(
-                actorId,
-                "CUSTOMER",
-                Order.OrderStatus.CONFIRMED,   // Order의 enum 전달 (Order 내부에서 History enum으로 변환)
-                null
+            actorId,
+            "CUSTOMER",
+            Order.OrderStatus.CONFIRMED,
+            null
         );
         orderStatusHistoryRepository.save(hist);
 
         // 로그
         saveLog(payment.getId(), PaymentEventType.CONFIRM, 200,
-                jsonOf(Map.of("paymentKey", paymentKey, "idempotencyKey", payment.getIdempotencyKey())),
-                jsonOf(mockResp));
+            jsonOf(Map.of("paymentKey", paymentKey, "idempotencyKey", payment.getIdempotencyKey())),
+            jsonOf(mockResp));
     }
 
     @Override
@@ -153,37 +154,38 @@ public class PaymentServiceImpl implements PaymentService {
         if (reason == null || reason.isBlank()) throw new BadRequestException("취소 사유 누락");
 
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("결제를 찾을 수 없습니다: " + paymentId));
+            .orElseThrow(() -> new EntityNotFoundException("결제를 찾을 수 없습니다: " + paymentId));
 
         Order order = orderRepository.findById(payment.getOrderId())
-                .orElseThrow(() -> new EntityNotFoundException("결제에 연결된 주문을 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("결제에 연결된 주문을 찾을 수 없습니다."));
 
-        // 도메인 규칙대로 취소 (PENDING에서만 허용)
+        // 도메인 규칙대로 취소
         payment.cancel(reason);
 
         // 주문 취소 반영 + 이력
         order.markPaymentCanceled(reason);
-        Long actorId = parseLongOrNull((order.getUser() != null) ? order.getUser().getUserId() : null);
+
+        String actorId = (order.getUser() != null) ? order.getUser().getUserId() : "SYSTEM";
         OrderStatusHistory hist = order.toStatusHistory(
-                actorId,
-                "CUSTOMER",
-                Order.OrderStatus.CANCELED,
-                reason
+            actorId,
+            "CUSTOMER",
+            Order.OrderStatus.CANCELED,
+            reason
         );
         orderStatusHistoryRepository.save(hist);
 
         // 로그
         saveLog(payment.getId(), PaymentEventType.CANCEL, 200,
-                jsonOf(Map.of("reason", reason, "idempotencyKey", payment.getIdempotencyKey())),
-                "{\"result\":\"canceled\"}");
+            jsonOf(Map.of("reason", reason, "idempotencyKey", payment.getIdempotencyKey())),
+            "{\"result\":\"canceled\"}");
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PaymentResponse> search(Pageable pageable, Boolean includeDeleted) {
         var page = Boolean.TRUE.equals(includeDeleted)
-                ? paymentRepository.findAllIncludingDeleted(pageable)
-                : paymentRepository.findAll(pageable);
+            ? paymentRepository.findAllIncludingDeleted(pageable)
+            : paymentRepository.findAll(pageable);
         return page.map(this::toResponse);
     }
 
@@ -205,15 +207,15 @@ public class PaymentServiceImpl implements PaymentService {
 
     private PaymentResponse toResponse(Payment p) {
         return new PaymentResponse(
-                p.getId(),
-                p.getOrderId(),
-                p.getUserId(),
-                p.getAmount(),
-                p.getMethod(),
-                p.getStatus(),
-                p.getCreatedAt(),
-                p.getConfirmedAt(),
-                p.getCanceledAt()
+            p.getId(),
+            p.getOrderId(),
+            p.getUserId(),
+            p.getAmount(),
+            p.getMethod(),
+            p.getStatus(),
+            p.getCreatedAt(),
+            p.getConfirmedAt(),
+            p.getCanceledAt()
         );
     }
 
@@ -227,13 +229,5 @@ public class PaymentServiceImpl implements PaymentService {
         }
         sb.append("}");
         return sb.toString();
-    }
-
-    private Long parseLongOrNull(String s) {
-        try {
-            return (s == null || s.isBlank()) ? null : Long.parseLong(s);
-        } catch (NumberFormatException e) {
-            return null; // 알파넘릭 userId 대응
-        }
     }
 }
