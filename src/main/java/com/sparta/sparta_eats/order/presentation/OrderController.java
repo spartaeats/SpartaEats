@@ -3,7 +3,7 @@ package com.sparta.sparta_eats.order.presentation;
 import com.sparta.sparta_eats.global.infrastructure.config.security.UserDetailsImpl;
 import com.sparta.sparta_eats.order.application.service.OrderService;
 import com.sparta.sparta_eats.order.presentation.dto.request.OrderCreateRequest;
-import com.sparta.sparta_eats.order.presentation.dto.response.OrderResponse;
+import com.sparta.sparta_eats.order.presentation.dto.response.OrderCreateResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,8 +21,8 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                     @RequestBody OrderCreateRequest request) {
+    public ResponseEntity<OrderCreateResponse> createOrder(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                           @RequestBody OrderCreateRequest request) {
 
         return ResponseEntity.created(URI.create("temp"))
                 .body(orderService.createOrder(userDetails.getUser(), request));

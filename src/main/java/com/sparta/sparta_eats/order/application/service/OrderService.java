@@ -15,6 +15,7 @@ import com.sparta.sparta_eats.order.domain.repository.OrderItemOptionRepository;
 import com.sparta.sparta_eats.order.domain.repository.OrderItemRepository;
 import com.sparta.sparta_eats.order.domain.repository.OrderRepository;
 import com.sparta.sparta_eats.order.presentation.dto.request.OrderCreateRequest;
+import com.sparta.sparta_eats.order.presentation.dto.response.OrderCreateResponse;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderResponse;
 import com.sparta.sparta_eats.store.entity.ItemOption;
 import com.sparta.sparta_eats.store.entity.Store;
@@ -86,10 +87,10 @@ public class OrderService {
                 .sum());
     }
 
-    private List<OrderResponse.ItemResponse> buildAndSaveOrderItem(Order newOrder, OrderCreateRequest request, Map<UUID, Item> itemMap, Map<UUID, ItemOption> itemOptionMap) {
+    private List<OrderCreateResponse.ItemResponse> buildAndSaveOrderItem(Order newOrder, OrderCreateRequest request, Map<UUID, Item> itemMap, Map<UUID, ItemOption> itemOptionMap) {
         List<OrderItemOption> orderItemOptionList = new ArrayList<>();
         List<OrderItem> orderItemList = new ArrayList<>();
-        List<OrderResponse.ItemResponse> response = new ArrayList<>();
+        List<OrderCreateResponse.ItemResponse> response = new ArrayList<>();
         request.items()
                 .forEach(itemRequest -> {
                     Item item = itemMap.get(itemRequest.id());
@@ -139,8 +140,8 @@ public class OrderService {
                     List<OrderItemOption> currentOptions = optionsMapByItemId.getOrDefault(orderItem.getId(), Collections.emptyList());
 
                     // 3. 가져온 옵션 엔티티 리스트를 OptionResponse DTO 리스트로 변환
-                    List<OrderResponse.OptionResponse> optionResponses = currentOptions.stream()
-                            .map(option -> OrderResponse.OptionResponse.builder()
+                    List<OrderCreateResponse.OptionResponse> optionResponses = currentOptions.stream()
+                            .map(option -> OrderCreateResponse.OptionResponse.builder()
                                     .id(option.getItemOptionId())
                                     .name(option.getOptionName())
                                     .price(option.getAddPrice())
@@ -148,7 +149,7 @@ public class OrderService {
                             .toList();
 
                     // 4. 최종 ItemResponse DTO 생성
-                    return OrderResponse.ItemResponse.builder()
+                    return OrderCreateResponse.ItemResponse.builder()
                             // TODO Store Id UUID로 변경해야함
                             // 현재는 임시 UUID
                             .id(UUID.randomUUID())
@@ -183,7 +184,7 @@ public class OrderService {
 
 
     @Transactional
-    public OrderResponse createOrder(User user, OrderCreateRequest request) {
+    public OrderCreateResponse createOrder(User user, OrderCreateRequest request) {
         Map<UUID, Item> itemMap = fetchItemMap(request);
         Map<UUID, ItemOption> itemOptionMap = fetchItemOptionMap(request);
         Address address = addressRepository.findById(request.addressId())
@@ -201,20 +202,20 @@ public class OrderService {
         newOrder.assignItemSnapshot(snapshotDto);
 
         Order savedOrder = orderRepository.save(newOrder);
-        List<OrderResponse.ItemResponse> itemResponses = buildAndSaveOrderItem(newOrder, request, itemMap, itemOptionMap);
+        List<OrderCreateResponse.ItemResponse> itemResponses = buildAndSaveOrderItem(newOrder, request, itemMap, itemOptionMap);
 
 
-        return OrderResponse.builder()
+        return OrderCreateResponse.builder()
                 .id(savedOrder.getId())
                 .status(savedOrder.getStatus())
                 .createdAt(savedOrder.getCreatedAt())
-                .store(OrderResponse.StoreResponse.builder()
+                .store(OrderCreateResponse.StoreResponse.builder()
                         // TODO Store id UUID로 변경
                         // 현재는 임시 UUID
                         .id(UUID.randomUUID())
                         .name(store.getName()).build())
                 .items(itemResponses)
-                .amounts(OrderResponse.Amounts.builder()
+                .amounts(OrderCreateResponse.Amounts.builder()
                         .currency(Currency.getInstance("KRW"))
                         .vatIncluded(true)
                         .itemsTotal(snapshotDto.itemTotal())
@@ -222,14 +223,18 @@ public class OrderService {
                         .discountTotal(snapshotDto.discountTotal())
                         .payableTotal(snapshotDto.totalAmount())
                         .build())
-                .delivery(OrderResponse.Delivery.builder()
+                .delivery(OrderCreateResponse.Delivery.builder()
                         .addressSummary(addressSupplyDto.addrDetail())
                         .build())
                 .contactPhone(savedOrder.getContactPhone())
-                .flags(OrderResponse.Flags.builder()
+                .flags(OrderCreateResponse.Flags.builder()
                         .noCutlery(newOrder.getNoCutlery())
                         .noSideDishes(newOrder.getNoSideDish())
                         .build())
                 .build();
+    }
+
+    public List<OrderResponse> getOrderList(User user) {
+        return null;
     }
 }
