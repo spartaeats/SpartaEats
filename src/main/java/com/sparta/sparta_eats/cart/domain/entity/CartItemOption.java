@@ -1,7 +1,7 @@
 package com.sparta.sparta_eats.cart.domain.entity;
 
 import com.sparta.sparta_eats.global.entity.BaseEntity;
-import com.sparta.sparta_eats.store.entity.ItemOption;
+import com.sparta.sparta_eats.store.domain.entity.ItemOption;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

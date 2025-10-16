@@ -1,4 +1,4 @@
-package com.sparta.sparta_eats.store.entity;
+package com.sparta.sparta_eats.store.domain.entity;
 
 import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
@@ -19,16 +19,16 @@ public class Store {
     @Column(name = "id", columnDefinition = "UUID")
     private String id;
 
-    @Column(name = "name", nullable = false, length = 255)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "address", nullable = false, length = 255)
+    @Column(name = "address", nullable = false)
     private String address;
 
-    @Column(name = "addr_detail", length = 255)
+    @Column(name = "addr_detail")
     private String addressDetail;
 
-    @Column(name = "image", length = 255)
+    @Column(name = "image")
     private String image;
 
     @Column(name = "phone", nullable = false, length = 13)

@@ -3,6 +3,7 @@ package com.sparta.sparta_eats.order.domain.entity;
 import com.sparta.sparta_eats.address.domain.dto.AddressSupplyDto;
 import com.sparta.sparta_eats.address.domain.entity.Coordinate;
 import com.sparta.sparta_eats.global.entity.BaseEntity;
+import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.order.domain.dto.OrderSnapshotDto;
 import com.sparta.sparta_eats.store.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;

@@ -1,13 +1,12 @@
 package com.sparta.sparta_eats.item.domain.entity;
 
+import com.sparta.sparta_eats.store.domain.entity.ItemCategory;
+import com.sparta.sparta_eats.store.domain.entity.Store;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
-
-import com.sparta.sparta_eats.store.entity.ItemCategory;
-import com.sparta.sparta_eats.store.entity.Store;
 
 @Entity
 @Table(name = "p_item")
