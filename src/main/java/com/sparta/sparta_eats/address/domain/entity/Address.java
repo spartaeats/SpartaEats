@@ -1,6 +1,7 @@
 package com.sparta.sparta_eats.address.domain.entity;
 
 import com.sparta.sparta_eats.address.domain.LocationInfo;
+import com.sparta.sparta_eats.address.domain.dto.AddressSupplyDto;
 import com.sparta.sparta_eats.address.presentation.dto.request.AddressUpdateRequestV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressDeleteResponseV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressResponseV1;
@@ -109,5 +110,15 @@ public class Address extends BaseEntity {
                 .address(addrDetail)
                 .coordinate(coordinate)
                 .build();
+    }
+
+    public AddressSupplyDto toSupplyDto() {
+        return AddressSupplyDto.builder()
+                .addrRoad(addrRoad)
+                .addrDetail(addrDetail)
+                .coordinate(coordinate)
+                .memo(memo)
+                .build();
+
     }
 }

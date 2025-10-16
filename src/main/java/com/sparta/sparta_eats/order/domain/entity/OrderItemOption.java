@@ -4,6 +4,8 @@ import com.sparta.sparta_eats.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -41,7 +43,7 @@ public class OrderItemOption extends BaseEntity {
 
     /** 추가금(원 단위, BIGINT) */
     @Column(name = "add_price", nullable = false)
-    private Long addPrice;
+    private BigDecimal addPrice;
 
     /** 옵션 수량 */
     @Column(name = "quantity", nullable = false)
@@ -53,13 +55,13 @@ public class OrderItemOption extends BaseEntity {
             OrderItem orderItem,
             UUID itemOptionId,
             String optionName,
-            Long addPrice,
+            BigDecimal addPrice,
             Integer quantity
     ) {
         this.orderItem = orderItem;                 // 양방향 연결은 setOrderItem로 맞추는 것을 권장
         this.itemOptionId = Objects.requireNonNull(itemOptionId, "itemOptionId must not be null");
         this.optionName = Objects.requireNonNull(optionName, "optionName must not be null");
-        this.addPrice = (addPrice != null) ? addPrice : 0L;
+        this.addPrice = (addPrice != null) ? addPrice : BigDecimal.ZERO;
         this.quantity = (quantity != null) ? quantity : 1;
     }
 
@@ -69,7 +71,7 @@ public class OrderItemOption extends BaseEntity {
     public static OrderItemOption ofSnapshot(OrderItem orderItem,
                                              UUID itemOptionId,
                                              String optionName,
-                                             long addPrice,
+                                             BigDecimal addPrice,
                                              int quantity) {
         return OrderItemOption.builder()
                 .orderItem(orderItem)
@@ -87,8 +89,8 @@ public class OrderItemOption extends BaseEntity {
     }
 
     /** 옵션 총 추가금 = add_price × quantity */
-    public long getTotalAddPrice() {
-        return addPrice * (long) quantity;
+    public BigDecimal getTotalAddPrice() {
+        return addPrice.multiply(BigDecimal.valueOf(quantity));
     }
 
     public void changeQuantity(int quantity) {
@@ -109,9 +111,9 @@ public class OrderItemOption extends BaseEntity {
     }
 
     /** 스냅샷 업데이트(메뉴명/가격 정책 변경 반영 등) */
-    public void updateSnapshot(String optionName, Long addPrice) {
+    public void updateSnapshot(String optionName, BigDecimal addPrice) {
         if (optionName != null && !optionName.isBlank()) this.optionName = optionName;
-        if (addPrice != null && addPrice >= 0) this.addPrice = addPrice;
+        if (addPrice != null && addPrice.longValue() >= 0) this.addPrice = addPrice;
     }
 
     // ===== equals/hashCode 수동 구현 (Hibernate UUID 자동생성시 수동구현이 좋다함) =====
