@@ -8,11 +8,18 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
+
+
+@SQLDelete(sql = "UPDATE p_payment_idempotency SET deleted_at = now() WHERE idempotency_key = ?")
+@Where(clause = "deleted_at IS NULL")
 @Getter
 @Setter
 @Entity

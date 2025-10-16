@@ -48,6 +48,9 @@ public class Payment extends PaymentSoftDeletable {
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID orderId;
 
+    @Column(name = "user_id", nullable = false, length = 64)
+    private String userId;
+
     @Digits(integer = 19, fraction = 0)
     @Convert(converter = MoneyLongConverter.class)
     @Column(name = "amount", nullable = false)
@@ -70,6 +73,14 @@ public class Payment extends PaymentSoftDeletable {
     @Column(name = "note", length = 500)
     private String note;
 
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
+
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt;
+
+
+
     /* ---------- 도메인 메서드: 상태 전이 규칙 ---------- */
 
     /** 결제 생성 직후 요청 상태로 설정 (멱등키 포함) */
@@ -84,6 +95,7 @@ public class Payment extends PaymentSoftDeletable {
         ensureCurrent(PaymentStatus.PENDING, "승인은 PENDING 상태에서만 가능합니다.");
         this.status = PaymentStatus.CONFIRMED;
         this.pgPaymentKey = pgPaymentKey;
+        this.confirmedAt = LocalDateTime.now();  // 추가
     }
 
     /** 취소 — 생성 후 5분 이내 & PENDING 에서만 허용 */
@@ -92,6 +104,7 @@ public class Payment extends PaymentSoftDeletable {
         ensureCancelableWithinMinutes(5, "결제 생성 후 5분이 지나 취소할 수 없습니다.");
         this.status = PaymentStatus.CANCELED;
         this.note = reason;
+        this.canceledAt = LocalDateTime.now();   // 추가
     }
 
     /** 실패 — PENDING → FAILED 만 허용 */
@@ -100,6 +113,10 @@ public class Payment extends PaymentSoftDeletable {
         this.status = PaymentStatus.FAILED;
         this.note = reason;
     }
+
+
+
+
 
     /* ---------- 내부 검증 도우미 ---------- */
 

@@ -15,7 +15,7 @@ public record PaymentCreateRequest(
         @NotNull UUID orderId,
 
         @Schema(example = "5e9f1d10-1a7b-4f0e-8a6f-44b2f2ca73a9")
-        @NotNull UUID userId,
+        @NotNull String userId,
 
         @Schema(example = "23900", description = "결제 금액(원). BigDecimal이지만 정수만 허용")
         @Positive BigDecimal amount

@@ -7,10 +7,14 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
+@SQLDelete(sql = "UPDATE p_payment_log SET deleted_at = now() WHERE payment_log_id = ?")
+@Where(clause = "deleted_at IS NULL")
 @Getter
 @Setter
 @Entity
@@ -18,7 +22,7 @@ import java.util.UUID;
 public class PaymentLog extends PaymentSoftDeletable {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @JdbcTypeCode(SqlTypes.UUID)
     @Column(name = "payment_log_id", nullable = false, columnDefinition = "uuid")
     private UUID id;
