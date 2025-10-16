@@ -14,10 +14,4 @@ import java.util.Optional;
 public interface ItemRepository extends JpaRepository<Item, String> {
 
 	Page<Item> findByStoreId(String storeId, Pageable pageable);
-
-    Optional<User> findByUserId(String userId);
-    boolean existsByUserId(String userId);
-
-    // 삭제되지 않은 사용자만 조회
-    Optional<User> findByUserIdAndDeletedAtIsNull(String userId);
 }
