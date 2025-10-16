@@ -159,4 +159,45 @@ public class Order extends BaseEntity {
         if (store == null) throw new IllegalStateException("매장 정보가 없습니다.");
         if (orderNo == null) this.orderNo = generateOrderNo();
     }
+
+
+
+    /**
+     * BigDecimal로 전환하기 위해 메서드 만들었습니다. (한빈)
+     */
+    public java.math.BigDecimal getTotalAmountDecimal() {
+        return (this.totalAmount != null)
+                ? new java.math.BigDecimal(this.totalAmount)  // scale 0
+                : java.math.BigDecimal.ZERO;
+    }
+
+    // 결제 확정(승인) 시
+    public void markPaymentPaid() {
+        this.paymentStatus = PaymentStatus.PAID;
+        if (this.status == OrderStatus.PLACED) {
+            this.status = OrderStatus.CONFIRMED; // 팀 룰: 결제완료 → 접수(또는 원하는 상태로)
+        }
+    }
+
+    // 결제 취소 시
+    public void markPaymentCanceled(String reason) {
+        this.paymentStatus = PaymentStatus.REFUNDED; // 또는 FAILED, 팀 룰에 맞게
+        this.cancel(reason); // 이미 존재하는 cancel(reason) 재사용
+    }
+
+
+    public OrderStatusHistory toStatusHistory(Long actorId, String actorRole,
+                                              OrderStatus newStatus, String cancelReason) {
+        return OrderStatusHistory.builder()
+                .order(this)
+                .actorId(actorId)
+                .actorRole(actorRole)
+                .status(OrderStatusHistory.OrderStatus.valueOf(newStatus.name())) // ← 변환
+                .cancelReason(cancelReason)
+                .build();
+    }
+
+
+
+
 }

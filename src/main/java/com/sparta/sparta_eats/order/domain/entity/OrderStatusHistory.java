@@ -87,4 +87,10 @@ public class OrderStatusHistory extends BaseEntity {
     public enum OrderStatus {
         PLACED, CONFIRMED, COOKING, DELIVERY, COMPLETED, CANCELED
     }
+
+
+
+
+
+
 }
