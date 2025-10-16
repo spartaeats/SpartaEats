@@ -4,15 +4,14 @@ import com.sparta.sparta_eats.global.infrastructure.config.security.UserDetailsI
 import com.sparta.sparta_eats.order.application.service.OrderService;
 import com.sparta.sparta_eats.order.presentation.dto.request.OrderCreateRequest;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderCreateResponse;
+import com.sparta.sparta_eats.order.presentation.dto.response.OrderSingleResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,5 +25,11 @@ public class OrderController {
 
         return ResponseEntity.created(URI.create("temp"))
                 .body(orderService.createOrder(userDetails.getUser(), request));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderSingleResponse> getOrderDetail(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                              @PathVariable UUID id) {
+        return  ResponseEntity.ok(orderService.getOrderDetail(userDetails.getUser(), id));
     }
 }

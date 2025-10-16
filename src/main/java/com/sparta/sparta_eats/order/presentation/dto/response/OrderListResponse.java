@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-public record OrderResponse(
+public record OrderListResponse(
         UUID id,
         UUID storeId,
         String storeName,

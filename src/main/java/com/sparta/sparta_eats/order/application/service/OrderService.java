@@ -16,7 +16,8 @@ import com.sparta.sparta_eats.order.domain.repository.OrderItemRepository;
 import com.sparta.sparta_eats.order.domain.repository.OrderRepository;
 import com.sparta.sparta_eats.order.presentation.dto.request.OrderCreateRequest;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderCreateResponse;
-import com.sparta.sparta_eats.order.presentation.dto.response.OrderResponse;
+import com.sparta.sparta_eats.order.presentation.dto.response.OrderListResponse;
+import com.sparta.sparta_eats.order.presentation.dto.response.OrderSingleResponse;
 import com.sparta.sparta_eats.store.entity.ItemOption;
 import com.sparta.sparta_eats.store.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;
@@ -210,7 +211,7 @@ public class OrderService {
                 .status(savedOrder.getStatus())
                 .createdAt(savedOrder.getCreatedAt())
                 .store(OrderCreateResponse.StoreResponse.builder()
-                        // TODO Store id UUID로 변경
+                        // TODO Store id UUID로 변경해야함
                         // 현재는 임시 UUID
                         .id(UUID.randomUUID())
                         .name(store.getName()).build())
@@ -234,7 +235,73 @@ public class OrderService {
                 .build();
     }
 
-    public List<OrderResponse> getOrderList(User user) {
+    public List<OrderListResponse> getOrderList(User user) {
         return null;
+    }
+
+    public OrderSingleResponse getOrderDetail(User user, UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("id와 일치하는 주문이 존재하지 않습니다."));
+        List<OrderItem> orderItemList = orderItemRepository.findAllByOrder(order);
+        List<OrderItemOption> allOptions = orderItemOptionRepository.findAllByOrderItemIn(orderItemList);
+        Store store = order.getStore();
+
+        Map<UUID, List<OrderItemOption>> optionsMapByOrderItemId = allOptions.stream()
+                .collect(Collectors.groupingBy(
+                        // Key: 각 옵션의 부모인 OrderItem의 ID
+                        option -> option.getOrderItem().getId()
+                ));
+
+        List<OrderSingleResponse.ItemResponse> itemResponses = orderItemList.stream()
+                .map(orderItem -> {
+                    // Map에서 현재 orderItem의 ID에 해당하는 옵션 리스트를 가져옴
+                    List<OrderItemOption> currentOptions = optionsMapByOrderItemId.getOrDefault(orderItem.getId(), Collections.emptyList());
+
+                    // 가져온 옵션 엔티티 리스트를 DTO 리스트로 변환
+                    List<OrderSingleResponse.OptionResponse> options = currentOptions.stream()
+                            .map(option -> OrderSingleResponse.OptionResponse.builder()
+                                    .optionId(option.getItemOptionId())
+                                    .name(option.getOptionName())
+                                    .build())
+                            .toList();
+
+                    return OrderSingleResponse.ItemResponse.builder()
+                            // TODO 상품 아이디 UUID로 변경
+                            .id(UUID.randomUUID())
+                            .name(orderItem.getItemName())
+                            .basePrice(BigDecimal.valueOf(orderItem.getItem().getPrice().longValue()))
+                            .optionsPrice(orderItem.getOptionTotal())
+                            .unitPrice(orderItem.getUnitPrice())
+                            .quantity(orderItem.getQuantity())
+                            .calculatedLinePrice(orderItem.getLinePrice())
+                            .options(options)
+                            .build();
+                })
+                .toList();
+
+        return OrderSingleResponse.builder()
+                .id(order.getId())
+                .status(order.getStatus())
+                .store(OrderSingleResponse.StoreResponse.builder()
+                        // TODO Store id UUID로 변경해야함
+                        // 현재는 임시 UUID
+                        .id(UUID.randomUUID())
+                        .name(store.getName())
+                        .build())
+                .items(itemResponses)
+                .amounts(OrderSingleResponse.AmountsResponse.builder()
+                        .itemsTotal(order.getItemTotal())
+                        .deliveryFee(order.getDeliveryFee())
+                        .discountTotal(order.getDiscountTotal())
+                        .payableTotal(order.getDiscountTotal())
+                        .build())
+                .delivery(OrderSingleResponse.DeliveryResponse.builder()
+                        .addressSummary(order.getAddrDetail())
+                        .build())
+                .flags(OrderSingleResponse.FlagsResponse.builder()
+                        .noCutlery(order.getNoCutlery())
+                        .noSideDishes(order.getNoSideDish())
+                        .build())
+                .build();
     }
 }
