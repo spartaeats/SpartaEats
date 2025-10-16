@@ -78,7 +78,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         // 금액 일치 (Order.totalAmount(BigInteger) → BigDecimal 변환 메서드 사용 가정)
-        if (order.getTotalAmountDecimal() == null || amount.compareTo(order.getTotalAmountDecimal()) != 0) {
+        if (order.getTotalAmount() == null || amount.compareTo(order.getTotalAmount()) != 0) {
             throw new BadRequestException("요청 금액이 주문 총액과 일치하지 않습니다.");
         }
 
