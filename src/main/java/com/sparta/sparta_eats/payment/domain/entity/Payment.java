@@ -1,16 +1,19 @@
 package com.sparta.sparta_eats.payment.domain.entity;
 
 
+import com.sparta.sparta_eats.global.util.MoneyLongConverter;
 import com.sparta.sparta_eats.payment.domain.entity.base.PaymentSoftDeletable;
 import com.sparta.sparta_eats.payment.domain.model.PaymentMethod;
 import com.sparta.sparta_eats.payment.domain.model.PaymentStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Digits;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -45,8 +48,10 @@ public class Payment extends PaymentSoftDeletable {
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID orderId;
 
-    @Column(name = "amount", nullable = false, precision = 19, scale = 0)
-    private BigInteger amount;
+    @Digits(integer = 19, fraction = 0)
+    @Convert(converter = MoneyLongConverter.class)
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "method", nullable = false, length = 20)

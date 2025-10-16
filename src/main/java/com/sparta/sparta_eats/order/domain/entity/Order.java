@@ -1,13 +1,16 @@
 package com.sparta.sparta_eats.order.domain.entity;
 
 import com.sparta.sparta_eats.global.entity.BaseEntity;
+import com.sparta.sparta_eats.global.util.MoneyLongConverter;
 import com.sparta.sparta_eats.payment.domain.model.PaymentStatus;
 import com.sparta.sparta_eats.store.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Digits;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -47,17 +50,29 @@ public class Order extends BaseEntity {
     private FulfillmentType fulfillmentType = FulfillmentType.DELIVERY;
 
     // ===== 금액(스냅샷) =====
+    @Digits(integer = 19, fraction = 0)
+    @Convert(converter = MoneyLongConverter.class)
     @Column(name = "item_total", nullable = false)
-    private BigInteger itemTotal = BigInteger.ZERO;
+    private BigDecimal itemTotal = BigDecimal.ZERO;
 
+    @Digits(integer = 19, fraction = 0)
+    @Convert(converter = MoneyLongConverter.class)
     @Column(name = "delivery_fee", nullable = false)
-    private BigInteger deliveryFee = BigInteger.ZERO;
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
 
+    @Digits(integer = 19, fraction = 0)
+    @Convert(converter = MoneyLongConverter.class)
     @Column(name = "discount_total", nullable = false)
-    private BigInteger discountTotal = BigInteger.ZERO;
+    private BigDecimal discountTotal = BigDecimal.ZERO;
 
+    @Digits(integer = 19, fraction = 0)
+    @Convert(converter = MoneyLongConverter.class)
     @Column(name = "total_amount", nullable = false)
-    private BigInteger totalAmount = BigInteger.ZERO;
+    private BigDecimal totalAmount = BigDecimal.ZERO;
+
+    public void recalcTotal() {
+        this.totalAmount = itemTotal.add(deliveryFee).subtract(discountTotal);
+    }
 
     // ===== 상태 =====
     @Enumerated(EnumType.STRING)

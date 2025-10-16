@@ -4,11 +4,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public record PaymentCreateRequest(
-        @Schema(example = "idem-20251013-0001", description = "멱등성 키(헤더가 우선, 없으면 이 값 사용)")
+        @Schema(example = "idem-20251015-0001")
         @NotBlank String idempotencyKey,
 
         @Schema(example = "e2c4b98f-2a7a-42c2-9e21-8b4e9c1b1a10")
@@ -17,6 +17,6 @@ public record PaymentCreateRequest(
         @Schema(example = "5e9f1d10-1a7b-4f0e-8a6f-44b2f2ca73a9")
         @NotNull UUID userId,
 
-        @Schema(example = "12345", description = "결제금액(원). BIGINT/long")
-        @Positive long amount
+        @Schema(example = "23900", description = "결제 금액(원). BigDecimal이지만 정수만 허용")
+        @Positive BigDecimal amount
 ) { }
