@@ -4,6 +4,7 @@ import com.sparta.sparta_eats.address.domain.dto.AddressSupplyDto;
 import com.sparta.sparta_eats.address.domain.entity.Coordinate;
 import com.sparta.sparta_eats.global.entity.BaseEntity;
 import com.sparta.sparta_eats.order.domain.dto.OrderSnapshotDto;
+import com.sparta.sparta_eats.order.presentation.dto.response.OrderResponse;
 import com.sparta.sparta_eats.store.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;

@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -85,9 +86,10 @@ public class OrderService {
                 .sum());
     }
 
-    private List<OrderItem> buildAndSaveOrderItem(Order newOrder, OrderCreateRequest request, Map<UUID, Item> itemMap, Map<UUID, ItemOption> itemOptionMap) {
+    private List<OrderResponse.ItemResponse> buildAndSaveOrderItem(Order newOrder, OrderCreateRequest request, Map<UUID, Item> itemMap, Map<UUID, ItemOption> itemOptionMap) {
         List<OrderItemOption> orderItemOptionList = new ArrayList<>();
         List<OrderItem> orderItemList = new ArrayList<>();
+        List<OrderResponse.ItemResponse> response = new ArrayList<>();
         request.items()
                 .forEach(itemRequest -> {
                     Item item = itemMap.get(itemRequest.id());
@@ -122,9 +124,42 @@ public class OrderService {
                 });
 
         List<OrderItem> savedOrderItems = orderItemRepository.saveAll(orderItemList);
-        orderItemOptionRepository.saveAll(orderItemOptionList);
+        List<OrderItemOption> savedOrderItemOptions = orderItemOptionRepository.saveAll(orderItemOptionList);
 
-        return savedOrderItems;
+        Map<UUID, List<OrderItemOption>> optionsMapByItemId = savedOrderItemOptions.stream()
+                .collect(Collectors.groupingBy(
+                        // Key: 부모 OrderItem의 ID를 가져옴
+                        orderItemOption -> orderItemOption.getOrderItem().getId()
+                ));
+
+        return savedOrderItems.stream()
+                .map(orderItem -> {
+                    // Map에서 현재 OrderItem의 ID에 해당하는 옵션 리스트를 가져옴
+                    // getOrDefault를 사용하면 옵션이 없는 경우에도 안전하게 빈 리스트를 반환
+                    List<OrderItemOption> currentOptions = optionsMapByItemId.getOrDefault(orderItem.getId(), Collections.emptyList());
+
+                    // 3. 가져온 옵션 엔티티 리스트를 OptionResponse DTO 리스트로 변환
+                    List<OrderResponse.OptionResponse> optionResponses = currentOptions.stream()
+                            .map(option -> OrderResponse.OptionResponse.builder()
+                                    .id(option.getItemOptionId())
+                                    .name(option.getOptionName())
+                                    .price(option.getAddPrice())
+                                    .build())
+                            .toList();
+
+                    // 4. 최종 ItemResponse DTO 생성
+                    return OrderResponse.ItemResponse.builder()
+                            // TODO Store Id UUID로 변경해야함
+                            // 현재는 임시 UUID
+                            .id(UUID.randomUUID())
+                            .name(orderItem.getItemName())
+                            .quantity(orderItem.getQuantity())
+                            .unitPrice(orderItem.getUnitPrice())
+                            .linePrice(orderItem.getLinePrice())
+                            .options(optionResponses)
+                            .build();
+                })
+                .toList();
     }
 
     private OrderSnapshotDto fetchOrderSnapshotDto(AddressSupplyDto addressSupplyDto, Store store, Map<UUID, Item> itemMap, Map<UUID, ItemOption> itemOptionMap, OrderCreateRequest request) {
@@ -165,9 +200,36 @@ public class OrderService {
         OrderSnapshotDto snapshotDto = fetchOrderSnapshotDto(addressSupplyDto, store, itemMap, itemOptionMap, request);
         newOrder.assignItemSnapshot(snapshotDto);
 
-        orderRepository.save(newOrder);
-        buildAndSaveOrderItem(newOrder, request, itemMap, itemOptionMap);
+        Order savedOrder = orderRepository.save(newOrder);
+        List<OrderResponse.ItemResponse> itemResponses = buildAndSaveOrderItem(newOrder, request, itemMap, itemOptionMap);
 
-        return null;
+
+        return OrderResponse.builder()
+                .id(savedOrder.getId())
+                .status(savedOrder.getStatus())
+                .createdAt(savedOrder.getCreatedAt())
+                .store(OrderResponse.StoreResponse.builder()
+                        // TODO Store id UUID로 변경
+                        // 현재는 임시 UUID
+                        .id(UUID.randomUUID())
+                        .name(store.getName()).build())
+                .items(itemResponses)
+                .amounts(OrderResponse.Amounts.builder()
+                        .currency(Currency.getInstance("KRW"))
+                        .vatIncluded(true)
+                        .itemsTotal(snapshotDto.itemTotal())
+                        .deliveryFee(snapshotDto.deliveryFee())
+                        .discountTotal(snapshotDto.discountTotal())
+                        .payableTotal(snapshotDto.totalAmount())
+                        .build())
+                .delivery(OrderResponse.Delivery.builder()
+                        .addressSummary(addressSupplyDto.addrDetail())
+                        .build())
+                .contactPhone(savedOrder.getContactPhone())
+                .flags(OrderResponse.Flags.builder()
+                        .noCutlery(newOrder.getNoCutlery())
+                        .noSideDishes(newOrder.getNoSideDish())
+                        .build())
+                .build();
     }
 }
