@@ -15,7 +15,7 @@ import java.util.UUID;
 public class OrderStatusHistory extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // Hibernate가 persist 시점에 UUID 생성
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
@@ -24,13 +24,13 @@ public class OrderStatusHistory extends BaseEntity {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    /** 변경 주체 ID (user.user_id, BIGINT) */
-    @Column(name = "actor_id", nullable = false)
-    private Long actorId;
+    /** 변경 주체 ID (user.user_id, VARCHAR) */
+    @Column(name = "actor_id", nullable = false, length = 20)
+    private String actorId;  // ← String 타입
 
     /** 변경 주체 역할(스냅샷) */
     @Column(name = "actor_role", nullable = false, length = 20)
-    private String actorRole; // 스냅샷이라 Enum적용 안하고 String으로 처리
+    private String actorRole;
 
     /** 주문 상태 */
     @Enumerated(EnumType.STRING)
@@ -43,10 +43,10 @@ public class OrderStatusHistory extends BaseEntity {
 
     @Builder
     private OrderStatusHistory(Order order,
-                               Long actorId,
-                               String actorRole,
-                               OrderStatus status,
-                               String cancelReason) {
+        String actorId,  // ← String 타입
+        String actorRole,
+        OrderStatus status,
+        String cancelReason) {
         this.order = Objects.requireNonNull(order, "주문 정보는 비어 있을 수 없습니다.");
         this.actorId = Objects.requireNonNull(actorId, "변경 주체 ID는 비어 있을 수 없습니다.");
         this.actorRole = Objects.requireNonNull(actorRole, "변경 주체 역할은 비어 있을 수 없습니다.");
@@ -54,12 +54,10 @@ public class OrderStatusHistory extends BaseEntity {
         this.cancelReason = (cancelReason != null && !cancelReason.isBlank()) ? cancelReason : null;
     }
 
-    // ====== 간단 헬퍼 ======
     public boolean isCanceled() {
         return this.status == OrderStatus.CANCELED;
     }
 
-    /** 취소 상태일 때만 사유 설정 가능 */
     public void setCancelReason(String reason) {
         if (!isCanceled()) {
             throw new IllegalStateException("현재 상태가 취소(CANCELED)가 아니어서 취소 사유를 설정할 수 없습니다.");
@@ -67,7 +65,6 @@ public class OrderStatusHistory extends BaseEntity {
         this.cancelReason = (reason != null && !reason.isBlank()) ? reason : null;
     }
 
-    // ====== 동등성: id가 하나라도 null이면 같지 않다고 본다 ======
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -82,15 +79,7 @@ public class OrderStatusHistory extends BaseEntity {
         return (id != null) ? id.hashCode() : System.identityHashCode(this);
     }
 
-    // ====== enum  ======
-
     public enum OrderStatus {
         PLACED, CONFIRMED, COOKING, DELIVERY, COMPLETED, CANCELED
     }
-
-
-
-
-
-
 }

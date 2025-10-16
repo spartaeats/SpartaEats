@@ -117,7 +117,8 @@ public class Order extends BaseEntity {
 
     // ===== Builder =====
     @Builder
-    public Order(User user, Store store, FulfillmentType fulfillmentType, String contactPhone, Boolean noCutlery, Boolean noSideDish, String memoToOwner, String memoToRider) {
+    public Order(User user, Store store, FulfillmentType fulfillmentType, String contactPhone,
+        Boolean noCutlery, Boolean noSideDish, String memoToOwner, String memoToRider) {
         this.user = user;
         this.store = store;
         this.fulfillmentType = (fulfillmentType != null) ? fulfillmentType : FulfillmentType.DELIVERY;
@@ -139,6 +140,14 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.CANCELED;
         this.canceledAt = LocalDateTime.now();
         this.cancelReason = reason;
+    }
+
+    // ===== 주문 상태 변경 =====
+    public void updateStatus(OrderStatus newStatus) {
+        if (newStatus == null) {
+            throw new IllegalArgumentException("상태는 null일 수 없습니다.");
+        }
+        this.status = newStatus;
     }
 
     // ===== ENUM =====
@@ -169,6 +178,8 @@ public class Order extends BaseEntity {
         if (orderNo == null) this.orderNo = generateOrderNo();
     }
 
+    // ===== 결제 관련 메서드 =====
+
     // 결제 확정(승인) 시
     public void markPaymentPaid() {
         this.paymentStatus = PaymentStatus.PAID;
@@ -183,23 +194,30 @@ public class Order extends BaseEntity {
         this.cancel(reason); // 이미 존재하는 cancel(reason) 재사용
     }
 
+    // ===== 주문 상태 이력 생성 메서드 =====
 
-    public OrderStatusHistory toStatusHistory(Long actorId, String actorRole,
-                                              OrderStatus newStatus, String cancelReason) {
+    /**
+     * String actorId를 받아 OrderStatusHistory 생성
+     *
+     * @param actorId String 타입의 actorId (user.getUserId() 또는 "SYSTEM")
+     * @param actorRole 변경 주체 역할
+     * @param newStatus 새로운 주문 상태
+     * @param cancelReason 취소 사유 (nullable)
+     * @return OrderStatusHistory 엔티티
+     */
+    public OrderStatusHistory toStatusHistory(String actorId, String actorRole,
+        OrderStatus newStatus, String cancelReason) {
         return OrderStatusHistory.builder()
-                .order(this)
-                .actorId(actorId)
-                .actorRole(actorRole)
-                .status(OrderStatusHistory.OrderStatus.valueOf(newStatus.name())) // ← 변환
-                .cancelReason(cancelReason)
-                .build();
+            .order(this)
+            .actorId(actorId)
+            .actorRole(actorRole)
+            .status(OrderStatusHistory.OrderStatus.valueOf(newStatus.name()))
+            .cancelReason(cancelReason)
+            .build();
     }
 
-
-
-
-
     // ===== Entity 할당 메서드 =====
+
     public void assignAddress(AddressSupplyDto supplyDto) {
         addrRoad = supplyDto.addrRoad();
         addrDetail = supplyDto.addrDetail();
@@ -208,6 +226,7 @@ public class Order extends BaseEntity {
     }
 
     // ===== 스냅샷 할당 메서드 =====
+
     public void assignItemSnapshot(OrderSnapshotDto snapshotDto) {
         itemTotal = snapshotDto.itemTotal();
         deliveryFee = snapshotDto.deliveryFee();

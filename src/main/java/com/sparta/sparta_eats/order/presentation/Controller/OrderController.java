@@ -1,4 +1,4 @@
-package com.sparta.sparta_eats.order.presentation;
+package com.sparta.sparta_eats.order.presentation.Controller;
 
 import com.sparta.sparta_eats.global.infrastructure.config.security.UserDetailsImpl;
 import com.sparta.sparta_eats.order.application.service.OrderService;
