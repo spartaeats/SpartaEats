@@ -6,28 +6,17 @@ spring:
     url: jdbc:h2:mem:testdb
     username: sa
     password:
-    driver-class-name: org.h2.Driver
 
   h2:
     console:
       enabled: true
       path: /h2-console
-
   jpa:
     open-in-view: false
-    defer-datasource-initialization: true  # 🆕 추가!
     hibernate:
       ddl-auto: create
     properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect  # 🆕 추가!
-
-  sql:  # 🆕 전체 섹션 추가!
-    init:
-      mode: always
-      encoding: UTF-8
-      data-locations: classpath:data.sql
+      hibernate.format_sql: true
 
 logging:
   level:
@@ -35,7 +24,9 @@ logging:
     org.hibernate.orm.jdbc.bind: trace
 
 server:
-  port: 8080
+  port: ${PORT:8080}
+#  servlet:
+#    context-path: /v1
 
 springdoc:
   swagger-ui:
@@ -47,6 +38,7 @@ app:
     allowed-sizes: [10, 30, 50]
     one-indexed: true
 
+# JWT 설정 (개발환경 오버라이드)
 jwt:
   secret-key: ${JWT_SECRET_KEY}
   expiration-time: ${JWT_EXPIRATION_TIME:86400000}  # 개발은 24시간으로 길게

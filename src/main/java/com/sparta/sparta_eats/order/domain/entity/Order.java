@@ -1,7 +1,10 @@
 package com.sparta.sparta_eats.order.domain.entity;
 
+import com.sparta.sparta_eats.address.domain.dto.AddressSupplyDto;
+import com.sparta.sparta_eats.address.domain.entity.Coordinate;
 import com.sparta.sparta_eats.global.entity.BaseEntity;
 import com.sparta.sparta_eats.store.domain.entity.Store;
+import com.sparta.sparta_eats.order.domain.dto.OrderSnapshotDto;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -9,7 +12,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -49,16 +52,16 @@ public class Order extends BaseEntity {
 
     // ===== 금액(스냅샷) =====
     @Column(name = "item_total", nullable = false)
-    private BigInteger itemTotal = BigInteger.ZERO;
+    private BigDecimal itemTotal = BigDecimal.ZERO;
 
     @Column(name = "delivery_fee", nullable = false)
-    private BigInteger deliveryFee = BigInteger.ZERO;
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
 
     @Column(name = "discount_total", nullable = false)
-    private BigInteger discountTotal = BigInteger.ZERO;
+    private BigDecimal discountTotal = BigDecimal.ZERO;
 
     @Column(name = "total_amount", nullable = false)
-    private BigInteger totalAmount = BigInteger.ZERO;
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     // ===== 상태 =====
     @Enumerated(EnumType.STRING)
@@ -73,9 +76,11 @@ public class Order extends BaseEntity {
     @Column(name = "contact_phone", length = 13)
     private String contactPhone;
 
+    // discuss riderCode는 주소의 memo로 저장
     @Column(name = "request_to_rider_code", length = 30)
     private String requestToRiderCode;
 
+    // discuss riderText는 주문시 받는 사항
     @Column(name = "request_to_rider_text", length = 255)
     private String requestToRiderText;
 
@@ -96,14 +101,12 @@ public class Order extends BaseEntity {
     @Column(name = "addr_detail", length = 255)
     private String addrDetail;
 
+    // TODO 우편번호는 필요 없다고 판단 우선 제외 후 상의
     @Column(name = "addr_postal_code", length = 10)
     private String addrPostalCode;
 
-    @Column(name = "addr_lat")
-    private Double addrLat;
-
-    @Column(name = "addr_lng")
-    private Double addrLng;
+    @Embedded
+    private Coordinate coordinate;
 
     // ===== 취소 관련 =====
     @Column(name = "canceled_at")
@@ -114,12 +117,16 @@ public class Order extends BaseEntity {
 
     // ===== Builder =====
     @Builder
-    public Order(User user, Store store, FulfillmentType fulfillmentType, String contactPhone) {
+    public Order(User user, Store store, FulfillmentType fulfillmentType, String contactPhone, Boolean noCutlery, Boolean noSideDish, String memoToOwner, String memoToRider) {
         this.user = user;
         this.store = store;
         this.fulfillmentType = (fulfillmentType != null) ? fulfillmentType : FulfillmentType.DELIVERY;
         this.contactPhone = contactPhone;
         this.orderNo = generateOrderNo();
+        this.requestToRiderText = memoToRider;
+        this.requestToStoreText = memoToOwner;
+        this.noCutlery = noCutlery;
+        this.noSideDish = noSideDish;
     }
 
     // ===== 주문번호 자동 생성 =====
@@ -135,11 +142,11 @@ public class Order extends BaseEntity {
     }
 
     // ===== ENUM =====
-    public enum FulfillmentType { DELIVERY, PICKUP }
+    public enum FulfillmentType {DELIVERY, PICKUP}
 
-    public enum OrderStatus { PLACED, CONFIRMED, COOKING, DELIVERY, COMPLETED, CANCELED }
+    public enum OrderStatus {PLACED, CONFIRMED, COOKING, DELIVERY, COMPLETED, CANCELED}
 
-    public enum PaymentStatus { PENDING, AUTHORIZED, PAID, REFUNDED, FAILED }
+    public enum PaymentStatus {PENDING, AUTHORIZED, PAID, REFUNDED, FAILED}
 
     // ===== 중복 생기지 않도록 Lombok의 @EqualsAndHashCode를 쓰면 위험(엔티티끼리 무한순환생길수있다함)=====
     @Override
@@ -160,5 +167,51 @@ public class Order extends BaseEntity {
         if (user == null) throw new IllegalStateException("주문자 정보가 없습니다.");
         if (store == null) throw new IllegalStateException("매장 정보가 없습니다.");
         if (orderNo == null) this.orderNo = generateOrderNo();
+    }
+
+    // 결제 확정(승인) 시
+    public void markPaymentPaid() {
+        this.paymentStatus = PaymentStatus.PAID;
+        if (this.status == OrderStatus.PLACED) {
+            this.status = OrderStatus.CONFIRMED; // 팀 룰: 결제완료 → 접수(또는 원하는 상태로)
+        }
+    }
+
+    // 결제 취소 시
+    public void markPaymentCanceled(String reason) {
+        this.paymentStatus = PaymentStatus.REFUNDED; // 또는 FAILED, 팀 룰에 맞게
+        this.cancel(reason); // 이미 존재하는 cancel(reason) 재사용
+    }
+
+
+    public OrderStatusHistory toStatusHistory(Long actorId, String actorRole,
+                                              OrderStatus newStatus, String cancelReason) {
+        return OrderStatusHistory.builder()
+                .order(this)
+                .actorId(actorId)
+                .actorRole(actorRole)
+                .status(OrderStatusHistory.OrderStatus.valueOf(newStatus.name())) // ← 변환
+                .cancelReason(cancelReason)
+                .build();
+    }
+
+
+
+
+
+    // ===== Entity 할당 메서드 =====
+    public void assignAddress(AddressSupplyDto supplyDto) {
+        addrRoad = supplyDto.addrRoad();
+        addrDetail = supplyDto.addrDetail();
+        coordinate = supplyDto.coordinate();
+        requestToRiderCode = supplyDto.memo();
+    }
+
+    // ===== 스냅샷 할당 메서드 =====
+    public void assignItemSnapshot(OrderSnapshotDto snapshotDto) {
+        itemTotal = snapshotDto.itemTotal();
+        deliveryFee = snapshotDto.deliveryFee();
+        discountTotal = snapshotDto.discountTotal();
+        totalAmount = snapshotDto.totalAmount();
     }
 }
