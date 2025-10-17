@@ -9,9 +9,9 @@ import com.sparta.sparta_eats.cart.presentation.dto.request.ReqCartCreateV1;
 import com.sparta.sparta_eats.cart.presentation.dto.request.ReqCartItemQuantityChangeV1;
 import com.sparta.sparta_eats.cart.presentation.dto.response.ResCartV1;
 import com.sparta.sparta_eats.cart.presentation.dto.response.ResCreateCartResultV1;
-import com.sparta.sparta_eats.store.entity.Item;
-import com.sparta.sparta_eats.store.entity.Store;
-import com.sparta.sparta_eats.store.infrastructure.repository.ItemRepository;
+import com.sparta.sparta_eats.item.domain.entity.Item;
+import com.sparta.sparta_eats.store.domain.entity.Store;
+import com.sparta.sparta_eats.item.domain.repository.ItemRepository;
 import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -206,20 +206,20 @@ public class CartControllerV1 {
      */
     private ResCartV1 toResCart(CartSnapshot s) {
         // 1. 매장 정보 조회
-        Store store = storeRepository.findById(s.storeId().toString())
+        Store store = storeRepository.findById(s.storeId())
                 .orElse(new Store()); // 기본값으로 빈 객체
         
         // 2. 상품 정보들 조회
-        List<String> itemIds = s.items().stream()
-                .map(ci -> ci.itemId().toString())
+        List<UUID> itemIds = s.items().stream()
+                .map(ci -> ci.itemId())
                 .toList();
-        List<Item> items = itemRepository.findByIdIn(itemIds);
+        List<Item> items = itemRepository.findAllById(itemIds);
         
         // 3. 상품별 가격 계산
         List<ResCartV1.Item> resItems = s.items().stream().map(ci -> {
             // 해당 상품 찾기
             Item item = items.stream()
-                    .filter(i -> i.getId().equals(ci.itemId().toString()))
+                    .filter(i -> i.getId().equals(ci.itemId()))
                     .findFirst()
                     .orElse(new Item()); // 기본값
             

@@ -10,24 +10,21 @@ import com.sparta.sparta_eats.cart.application.exception.InvalidQuantityExceptio
 import com.sparta.sparta_eats.cart.application.exception.StoreMismatchException;
 import com.sparta.sparta_eats.cart.domain.entity.Cart;
 import com.sparta.sparta_eats.cart.domain.entity.CartItem;
-import com.sparta.sparta_eats.cart.domain.entity.CartItemOption;
-import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemOptionRepository;
 import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemRepository;
 import com.sparta.sparta_eats.cart.infrastructure.repository.CartRepository;
-import com.sparta.sparta_eats.store.entity.Store;
+import com.sparta.sparta_eats.item.domain.entity.Item;
+import com.sparta.sparta_eats.item.domain.repository.ItemRepository;
+import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
+import com.sparta.sparta_eats.user.domain.entity.User;
 import com.sparta.sparta_eats.user.infrastructure.repository.UserRepository;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.MessageDigest;
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -35,20 +32,20 @@ public class CartServiceImpl implements CartService {
 
     private final UserRepository userRepository;
     private final StoreRepository storeRepository;
+    private final ItemRepository itemRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final CartItemOptionRepository cartItemOptionRepository;
 
     public CartServiceImpl(UserRepository userRepository,
                            StoreRepository storeRepository,
+                           ItemRepository itemRepository,
                            CartRepository cartRepository,
-                           CartItemRepository cartItemRepository,
-                           CartItemOptionRepository cartItemOptionRepository) {
+                           CartItemRepository cartItemRepository) {
         this.userRepository = userRepository;
         this.storeRepository = storeRepository;
+        this.itemRepository = itemRepository;
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
-        this.cartItemOptionRepository = cartItemOptionRepository;
     }
 
 
@@ -80,9 +77,9 @@ public class CartServiceImpl implements CartService {
         }
 
         // --- 1) 사용자/매장 로딩 ---
-        userRepository.findByUserId(userId)
+        User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        Store store = storeRepository.findById(storeId.toString())
+        Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new IllegalArgumentException("Store not found: " + storeId));
 
         boolean created = false;
@@ -90,12 +87,12 @@ public class CartServiceImpl implements CartService {
         boolean replaced = false;
 
         // --- 2) 사용자 현재 카트 조회 ---
-        Cart cart = cartRepository.findByUserId(userId).orElse(null);
+        Cart cart = cartRepository.findByUser(user).orElse(null);
 
         // --- 3) 다른 매장 카트면 교체 여부 판단 ---
-        if (cart != null && !Objects.equals(cart.getStoreId(), UUID.fromString(store.getId()))) {
+        if (cart != null && !Objects.equals(cart.getStore().getId(), store.getId())) {
             if (!forceReplace) {
-                throw new StoreMismatchException(cart.getStoreId(), UUID.fromString(store.getId())); // 컨트롤러에서 409 매핑
+                throw new StoreMismatchException(cart.getStore().getId(), store.getId()); // 컨트롤러에서 409 매핑
             }
             cartRepository.delete(cart); // CASCADE 로 하위 모두 삭제
             cartRepository.flush();
@@ -106,8 +103,8 @@ public class CartServiceImpl implements CartService {
         // --- 4) 카트가 없으면 Builder로 생성 ---
         if (cart == null) {
             cart = Cart.builder()
-                    .userId(userId)             // userId 필드 사용
-                    .storeId(UUID.fromString(store.getId()))     // 매장은 storeId(UUID)만 보관
+                    .user(user)             // User 엔티티 사용
+                    .store(store)           // Store 엔티티 사용
                     .build();
             cart = cartRepository.save(cart);
             created = true;
@@ -118,48 +115,28 @@ public class CartServiceImpl implements CartService {
         // --- 5) 초기 아이템 병합(merge) ---
         if (items != null && !items.isEmpty()) {
             for (CreateCartCommand.Item reqItem : items) {
-                String hash = buildOptionComboHash(reqItem.itemId(), reqItem.options());
+                // Item 엔티티 조회
+                Item item = itemRepository.findById(reqItem.itemId())
+                        .orElseThrow(() -> new IllegalArgumentException("Item not found: " + reqItem.itemId()));
 
-                // 5-1) 동일 조합 라인 있는지 확인
-                CartItem line = cartItemRepository
-                        .findByCartIdAndOptionComboHash(cart.getId(), hash)
+                // 동일한 아이템이 이미 있는지 확인 (간단하게 itemId로만 확인)
+                CartItem existingItem = cart.getItems().stream()
+                        .filter(ci -> ci.getItem().getId().equals(reqItem.itemId()))
+                        .findFirst()
                         .orElse(null);
 
-                if (line == null) {
-                    // 새 라인: Builder 사용
-                    CartItem newLine = CartItem.builder()
-                            .cart(cart)
-                            .itemId(reqItem.itemId())
+                if (existingItem == null) {
+                    // 새 아이템 추가
+                    CartItem newItem = CartItem.builder()
+                            .item(item)
                             .quantity(reqItem.quantity())
-                            .optionComboHash(hash)
+                            .itemPrice(item.getPrice())
                             .build();
-                    CartItem savedLine = cartItemRepository.save(newLine);
-
-                    // 옵션들 저장 (있다면)
-                    if (reqItem.options() != null && !reqItem.options().isEmpty()) {
-                        List<CartItemOption> opts = reqItem.options().stream()
-                                .map(op -> CartItemOption.builder()
-                                        .cartItem(savedLine)
-                                        .itemOptId(op.itemOptionId())
-                                        .quantity(op.quantity())
-                                        .build())
-                                .toList();
-                        cartItemOptionRepository.saveAll(opts);
-                    }
+                    newItem.setCart(cart);
+                    cartItemRepository.save(newItem);
                 } else {
-                    // 동일 조합이면 수량만 증가
-                    line.increaseQuantity(reqItem.quantity());
-                }
-
-                // 5-2) UNIQUE(cart_id, option_combo_hash) 충돌 대비 (동시 클릭 등)
-                try {
-                    cartItemRepository.flush();
-                } catch (DataIntegrityViolationException e) {
-                    CartItem existing = cartItemRepository
-                            .findByCartIdAndOptionComboHash(cart.getId(), hash)
-                            .orElseThrow();
-                    existing.increaseQuantity(reqItem.quantity());
-                    cartItemRepository.flush();
+                    // 기존 아이템 수량 증가
+                    existingItem.increaseQuantity(reqItem.quantity());
                 }
             }
         }
@@ -172,7 +149,9 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(readOnly = true)
     public CartSnapshot getCart(String userId, UUID cartId) {
-        Cart cart = cartRepository.findWithItemsByIdAndUserId(cartId, userId)
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        Cart cart = cartRepository.findWithItemsByIdAndUser(cartId, user)
                 .orElseThrow(CartNotFoundException::new);
         return toSnapshot(cart);
     }
@@ -180,7 +159,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public void deleteCart(String userId, UUID cartId) {
         Cart cart = cartRepository.findById(cartId).orElseThrow(CartNotFoundException::new);
-        if (!Objects.equals(cart.getUserId(), userId)) {
+        if (!Objects.equals(cart.getUser().getUserId(), userId)) {
             throw new ForbiddenCartAccessException();
         }
         cartRepository.delete(cart); // CASCADE
@@ -194,12 +173,12 @@ public class CartServiceImpl implements CartService {
         List<CartSnapshot.CartItemSnapshot> itemSnaps = cart.getItems().stream()
                 .map(ci -> new CartSnapshot.CartItemSnapshot(
                         ci.getId(),
-                        ci.getItemId(),
+                        ci.getItem().getId(),
                         ci.getQuantity(),
-                        ci.getOptionComboHash(),
+                        "", // optionComboHash는 더 이상 사용하지 않음
                         ci.getOptions().stream()
                                 .map(op -> new CartSnapshot.CartItemOptionSnapshot(
-                                        op.getId(), op.getItemOptId(), op.getQuantity()
+                                        op.getId(), op.getItemOption().getId(), op.getQuantity()
                                 ))
                                 .toList(),
                         asInstant(ci.getCreatedAt()),
@@ -209,11 +188,11 @@ public class CartServiceImpl implements CartService {
 
         return new CartSnapshot(
                 cart.getId(),
-                cart.getUserId(),
-                cart.getStoreId(),
+                cart.getUser().getUserId(),
+                cart.getStore().getId(),
                 itemSnaps,
-                asInstant(cart.getCreatedAt()),
-                asInstant(cart.getUpdatedAt())
+                null, // Cart에는 createdAt이 없음
+                null  // Cart에는 updatedAt이 없음
         );
     }
 
@@ -226,41 +205,17 @@ public class CartServiceImpl implements CartService {
         throw new IllegalArgumentException("Unsupported timestamp type: " + ts.getClass());
     }
 
-    /**
-     * optionComboHash 규칙:
-     *  - 옵션을 itemOptionId 오름차순으로 정렬
-     *  - 포맷: "item:{itemId}|opt:{optId1}x{qty1},{optId2}x{qty2}..."
-     *  - SHA-256 해시로 64자 고정 문자열 반환
-     */
-    private String buildOptionComboHash(UUID itemId, List<CreateCartCommand.Option> options) {
-        String base = "item:" + itemId + "|opt:" + normalizeOptions(options);
-        return sha256Hex(base);
-    }
-
-    private String normalizeOptions(List<CreateCartCommand.Option> options) {
-        if (options == null || options.isEmpty()) return "";
-        return options.stream()
-                .sorted(Comparator.comparing(o -> o.itemOptionId().toString()))
-                .map(o -> o.itemOptionId() + "x" + o.quantity())
-                .collect(Collectors.joining(","));
-    }
-
-    private String sha256Hex(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] dig = md.digest(input.getBytes());
-            StringBuilder sb = new StringBuilder(dig.length * 2);
-            for (byte b : dig) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
-    }
     
     @Override
     public CartSnapshot getCartByUserId(String userId) {
+        // 사용자 조회
+        User user = userRepository.findByUserId(userId).orElse(null);
+        if (user == null) {
+            return null;
+        }
+        
         // 사용자의 장바구니 조회 (items와 options까지 함께 로딩)
-        Cart cart = cartRepository.findWithItemsByUserId(userId).orElse(null);
+        Cart cart = cartRepository.findWithItemsByUser(user).orElse(null);
         
         if (cart == null) {
             return null; // 장바구니가 없음
@@ -283,7 +238,7 @@ public class CartServiceImpl implements CartService {
         
         // 3. 사용자 권한 확인 (본인의 장바구니인지 확인)
         Cart cart = cartItem.getCart();
-        if (!Objects.equals(cart.getUserId(), userId)) {
+        if (!Objects.equals(cart.getUser().getUserId(), userId)) {
             throw new ForbiddenCartAccessException();
         }
         
@@ -293,12 +248,11 @@ public class CartServiceImpl implements CartService {
             cartItemRepository.delete(cartItem);
         } else {
             // 수량 변경
-            cartItem.setQuantity(quantity);
-            cartItemRepository.save(cartItem);
+            cartItem.increaseQuantity(quantity - cartItem.getQuantity());
         }
         
         // 5. 업데이트된 장바구니 스냅샷 반환
-        Cart updatedCart = cartRepository.findWithItemsByIdAndUserId(cart.getId(), userId)
+        Cart updatedCart = cartRepository.findWithItemsByIdAndUser(cart.getId(), cart.getUser())
                 .orElseThrow(() -> new CartNotFoundException());
         
         return toSnapshot(updatedCart);
