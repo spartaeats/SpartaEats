@@ -10,7 +10,8 @@ import java.util.UUID;
 public record ReqCartCreateV1(
         @NotNull UUID storeId,
         Boolean forceReplace,
-        List<Item> items
+        List<Item> items,
+        @NotNull UUID addressId
 ) {
     public record Item(
             @NotNull UUID itemId,

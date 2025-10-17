@@ -1,31 +1,42 @@
 package com.sparta.sparta_eats.cart.presentation.dto.response;
 
-
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 public record ResCartV1(
-        UUID id,
-        String userId,
-        UUID storeId,
+        Boolean exists,
+        UUID cartId,
+        Store store,
         List<Item> items,
+        Amounts amounts,
+        UUID addressId,
         Instant createdAt,
         Instant updatedAt
 ) {
-    public record Item(
+    public record Store(
             UUID id,
-            UUID itemId,
-            int quantity,
-            String optionComboHash,
-            List<Option> options,
-            Instant createdAt,
-            Instant updatedAt
+            String name
     ) {}
-    public record Option(
-            UUID id,
-            UUID itemOptionId,
-            int quantity
+    
+    public record Item(
+            UUID cartItemId,
+            UUID itemId,
+            String name,
+            int quantity,
+            BigDecimal basePrice,
+            BigDecimal optionsPrice,
+            BigDecimal unitPrice,
+            BigDecimal calculatedLinePrice,
+            List<UUID> optionIds
+    ) {}
+    
+    public record Amounts(
+            BigDecimal itemsTotal,
+            BigDecimal deliveryFee,
+            BigDecimal discountTotal,
+            BigDecimal payableTotal
     ) {}
 }
 

@@ -17,9 +17,15 @@ public interface CartService {
     );
 
     CartSnapshot getCart(String userId, UUID cartId);
+    
+    // 사용자 ID로 장바구니 조회 (없으면 null)
+    CartSnapshot getCartByUserId(String userId);
 
     // 장바구니 삭제
     void deleteCart(String userId, UUID cartId);
+    
+    // 장바구니 아이템 수량 변경
+    CartSnapshot changeCartItemQuantity(String userId, UUID cartItemId, int quantity);
 }
 
 

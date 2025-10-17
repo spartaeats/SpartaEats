@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-//서비스 출력 전용 DTO: 가격 없음
+//서비스 출력 전용 DTO: 가격 정보 포함
 public record CartSnapshot(
         UUID id,
         String userId,

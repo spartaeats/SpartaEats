@@ -3,8 +3,10 @@ package com.sparta.sparta_eats.cart.application.service;
 import com.sparta.sparta_eats.cart.application.dto.CartSnapshot;
 import com.sparta.sparta_eats.cart.application.dto.CreateCartCommand;
 import com.sparta.sparta_eats.cart.application.dto.CreateCartResult;
+import com.sparta.sparta_eats.cart.application.exception.CartItemNotFoundException;
 import com.sparta.sparta_eats.cart.application.exception.CartNotFoundException;
 import com.sparta.sparta_eats.cart.application.exception.ForbiddenCartAccessException;
+import com.sparta.sparta_eats.cart.application.exception.InvalidQuantityException;
 import com.sparta.sparta_eats.cart.application.exception.StoreMismatchException;
 import com.sparta.sparta_eats.cart.domain.entity.Cart;
 import com.sparta.sparta_eats.cart.domain.entity.CartItem;
@@ -49,6 +51,16 @@ public class CartServiceImpl implements CartService {
         this.cartItemOptionRepository = cartItemOptionRepository;
     }
 
+
+    /**
+     * 장바구니 생성/재사용/교체
+     * @param userId
+     * @param storeId
+     * @param forceReplace
+     * @param items
+     * @return
+     */
+
     @Override
     public CreateCartResult createOrGetCart(String userId,
                                             UUID storeId,
@@ -70,7 +82,7 @@ public class CartServiceImpl implements CartService {
         // --- 1) 사용자/매장 로딩 ---
         userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        Store store = storeRepository.findById(storeId)
+        Store store = storeRepository.findById(storeId.toString())
                 .orElseThrow(() -> new IllegalArgumentException("Store not found: " + storeId));
 
         boolean created = false;
@@ -243,5 +255,52 @@ public class CartServiceImpl implements CartService {
         } catch (Exception e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
+    }
+    
+    @Override
+    public CartSnapshot getCartByUserId(String userId) {
+        // 사용자의 장바구니 조회 (items와 options까지 함께 로딩)
+        Cart cart = cartRepository.findWithItemsByUserId(userId).orElse(null);
+        
+        if (cart == null) {
+            return null; // 장바구니가 없음
+        }
+        
+        // 장바구니가 있으면 CartSnapshot으로 변환
+        return toSnapshot(cart);
+    }
+    
+    @Override
+    public CartSnapshot changeCartItemQuantity(String userId, UUID cartItemId, int quantity) {
+        // 1. 수량 검증
+        if (quantity < 0) {
+            throw new InvalidQuantityException("수량은 0 이상이어야 합니다");
+        }
+        
+        // 2. 장바구니 아이템 조회 및 권한 확인
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new CartItemNotFoundException("장바구니 아이템을 찾을 수 없습니다: " + cartItemId));
+        
+        // 3. 사용자 권한 확인 (본인의 장바구니인지 확인)
+        Cart cart = cartItem.getCart();
+        if (!Objects.equals(cart.getUserId(), userId)) {
+            throw new ForbiddenCartAccessException();
+        }
+        
+        // 4. 수량 변경 처리
+        if (quantity == 0) {
+            // 수량이 0이면 해당 아이템 삭제
+            cartItemRepository.delete(cartItem);
+        } else {
+            // 수량 변경
+            cartItem.setQuantity(quantity);
+            cartItemRepository.save(cartItem);
+        }
+        
+        // 5. 업데이트된 장바구니 스냅샷 반환
+        Cart updatedCart = cartRepository.findWithItemsByIdAndUserId(cart.getId(), userId)
+                .orElseThrow(() -> new CartNotFoundException());
+        
+        return toSnapshot(updatedCart);
     }
 }

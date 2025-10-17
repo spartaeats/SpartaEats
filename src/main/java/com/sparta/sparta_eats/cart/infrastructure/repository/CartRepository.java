@@ -21,6 +21,10 @@ public interface CartRepository extends JpaRepository<Cart, UUID> {
     // 카트 + 아이템(+옵션)까지 한 번에 스냅샷 조회 (응답용)
     @EntityGraph(attributePaths = {"items", "items.options"})
     Optional<Cart> findWithItemsByIdAndUserId(UUID id, String userId);
+    
+    // 사용자 ID로 카트 + 아이템(+옵션)까지 한 번에 조회
+    @EntityGraph(attributePaths = {"items", "items.options"})
+    Optional<Cart> findWithItemsByUserId(String userId);
 
 }
 
