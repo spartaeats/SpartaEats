@@ -1,12 +1,11 @@
-package com.sparta.sparta_eats.store.domain.entity;
+package com.sparta.sparta_eats.item.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
-
-import com.sparta.sparta_eats.item.domain.entity.Item;
+import java.util.UUID;
 
 @Entity
 @Table(name = "p_item_option")
@@ -17,14 +16,15 @@ import com.sparta.sparta_eats.item.domain.entity.Item;
 @Builder
 public class ItemOption {
 	@Id
-	@Column(name = "id", columnDefinition = "UUID")
-	private String id;
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@Column(name = "id", nullable = false, updatable = false)
+	private UUID id;
 
 	@Column(name = "name", nullable = false, length = 100)
 	private String name;
 
 	@Column(name = "option_type", nullable = false)
-	private Integer optionType; // 0: 단일 선택, 1: 다중 선택
+	private Integer optionType;
 
 	@Column(name = "add_price", nullable = false)
 	private BigInteger addPrice;
