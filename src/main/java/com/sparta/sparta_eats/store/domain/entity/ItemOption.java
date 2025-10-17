@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.sparta.sparta_eats.item.domain.entity.Item;
 
@@ -18,7 +19,7 @@ import com.sparta.sparta_eats.item.domain.entity.Item;
 public class ItemOption {
 	@Id
 	@Column(name = "id", columnDefinition = "UUID")
-	private String id;
+	private UUID id;
 
 	@Column(name = "name", nullable = false, length = 100)
 	private String name;

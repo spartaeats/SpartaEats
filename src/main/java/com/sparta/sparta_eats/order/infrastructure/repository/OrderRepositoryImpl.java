@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -21,8 +22,9 @@ import static com.sparta.sparta_eats.order.domain.entity.QOrder.order;
 import static com.sparta.sparta_eats.order.domain.entity.QOrderItem.orderItem;
 import static com.sparta.sparta_eats.store.domain.entity.QStore.store;
 
+@Repository
 @RequiredArgsConstructor
-public class OrderSearchRepositoryImpl implements OrderSearchRepository {
+public class OrderRepositoryImpl implements OrderSearchRepository {
     private final JPAQueryFactory queryFactory;
 
 
@@ -100,9 +102,6 @@ public class OrderSearchRepositoryImpl implements OrderSearchRepository {
         return storeNameMatches.or(itemExists);
     }
 
-    /**
-     * 조회 기간 (YYYY-MM)
-     */
     private BooleanExpression betweenDate(String monthFrom, String monthTo) {
         // 이 메소드는 Order 엔티티 구조와 직접적인 관련이 없으므로 기존 로직 유지
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
