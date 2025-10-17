@@ -15,6 +15,7 @@ import com.sparta.sparta_eats.order.domain.repository.OrderItemOptionRepository;
 import com.sparta.sparta_eats.order.domain.repository.OrderItemRepository;
 import com.sparta.sparta_eats.order.domain.repository.OrderRepository;
 import com.sparta.sparta_eats.order.presentation.dto.request.OrderCreateRequest;
+import com.sparta.sparta_eats.order.presentation.dto.request.OrderSearchCondition;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderCreateResponse;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderListResponse;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderSingleResponse;
@@ -22,6 +23,9 @@ import com.sparta.sparta_eats.store.domain.entity.ItemOption;
 import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -233,6 +237,68 @@ public class OrderService {
                         .noSideDishes(newOrder.getNoSideDish())
                         .build())
                 .build();
+    }
+
+    public Page<OrderListResponse> searchOrders(OrderSearchCondition condition, Pageable pageable) {
+
+        Page<Order> orderPage = orderRepository.search(condition, pageable);
+        List<Order> orderList = orderPage.getContent();
+
+        if (orderList.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderIn(orderList);
+
+        // 3. 조회된 OrderItem 목록으로 관련된 모든 OrderItemOption들을 한 번에 조회 (쿼리 1번)
+        List<OrderItemOption> orderItemOptions = orderItemOptionRepository.findAllByOrderItemIn(orderItems);
+
+        // 4. DTO 조립을 위해 조회된 데이터를 Map으로 가공 (메모리 작업)
+        Map<UUID, List<OrderItemOption>> optionsMap = orderItemOptions.stream()
+                .collect(Collectors.groupingBy(option -> option.getOrderItem().getId()));
+
+        Map<UUID, List<OrderItem>> itemsMap = orderItems.stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+
+        // 5. 최종 OrderResponse DTO 리스트 생성
+        List<OrderListResponse> responseContent = orderList.stream()
+                .map(order -> {
+                    List<OrderItem> currentItems = itemsMap.getOrDefault(order.getId(), Collections.emptyList());
+
+                    List<OrderListResponse.ItemResponse> itemResponses = currentItems.stream()
+                            .map(item -> {
+                                StringBuilder builder = new StringBuilder();
+                                List<OrderItemOption> currentOptions = optionsMap.getOrDefault(item.getId(), Collections.emptyList());
+                                currentOptions.forEach(option -> {
+                                    builder.append(option.getOptionName());
+                                    builder.append(", ");
+                                });
+
+                                return OrderListResponse.ItemResponse.builder()
+                                        .name(item.getItemName())
+                                        .quantity(item.getQuantity())
+                                        .optionsText(builder.toString())
+                                        .build();
+                            }).toList();
+
+                    return OrderListResponse.builder()
+                            .id(order.getId())
+                            // TODO storeID UUID로 변경해야함
+                            .storeId(UUID.randomUUID())
+                            .storeName(order.getStore().getName())
+                            .storeImage(order.getStore().getImage())
+                            .items(itemResponses)
+                            .totalAmount(order.getTotalAmount())
+                            .status(order.getStatus())
+                            .createdAt(order.getCreatedAt())
+                            .pageable(pageable)
+                            .totalElements(orderPage.getTotalElements())
+                            .totalPages(orderPage.getTotalPages())
+                            .hasNext(orderPage.hasNext())
+                            .build();
+                }).toList();
+
+        return new PageImpl<>(responseContent, pageable, orderPage.getTotalElements());
     }
 
     public OrderSingleResponse getOrderDetail(User user, UUID id) {
