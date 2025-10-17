@@ -58,4 +58,7 @@ jobs:
                 "${{ secrets.JWT_SECRET_KEY }}" \
                 "${{ secrets.KAKAO_API_KEY }}" \
                 "${{ secrets.TMAP_API_KEY }}" \
-                "${{ secrets.GOOGLE_API_KEY }}"
+                "${{ secrets.GOOGLE_API_KEY }}" \
+                "${{ secrets.DB_HOST }}" \
+                "${{ secrets.DB_USERNAME }}" \
+                "${{ secrets.DB_PASSWORD }}"
