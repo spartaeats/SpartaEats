@@ -61,4 +61,6 @@ jobs:
                 "${{ secrets.GOOGLE_API_KEY }}" \
                 "${{ secrets.DB_HOST }}" \
                 "${{ secrets.DB_USERNAME }}" \
-                "${{ secrets.DB_PASSWORD }}"
+                "${{ secrets.DB_PASSWORD }}" \
+                "${{ secrets.TOSS_SECRET_KEY}}" \
+                "${{ secrets.TOSS_CLIENT_KEY}}"

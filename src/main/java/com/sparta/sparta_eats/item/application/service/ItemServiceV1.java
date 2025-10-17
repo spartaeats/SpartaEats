@@ -30,7 +30,7 @@ public class ItemServiceV1 {
 	private final ItemCategoryRepository itemCategoryRepository;
 
 	@Transactional
-	public ResItemDtoV1 createItem(String storeId, ReqItemCreateDtoV1 request) {
+	public ResItemDtoV1 createItem(UUID storeId, ReqItemCreateDtoV1 request) {
 		Store store = storeRepository.findById(storeId)
 			.orElseThrow(() -> new IllegalArgumentException("Store not found"));
 
@@ -38,7 +38,7 @@ public class ItemServiceV1 {
 			.orElseThrow(() -> new IllegalArgumentException("Category not found"));
 
 		Item item = Item.builder()
-			.id(UUID.randomUUID().toString())
+			.id(UUID.randomUUID())
 			.name(request.getName())
 			.description(request.getDescription())
 			.price(request.getPrice())
@@ -56,7 +56,7 @@ public class ItemServiceV1 {
 		return ResItemDtoV1.from(savedItem);
 	}
 
-	public Page<ResItemDtoV1> getItemsByStore(String storeId, Pageable pageable) {
+	public Page<ResItemDtoV1> getItemsByStore(UUID storeId, Pageable pageable) {
 		if (!storeRepository.existsById(storeId)) {
 			throw new IllegalArgumentException("Store not found");
 		}
@@ -69,14 +69,14 @@ public class ItemServiceV1 {
 			.map(ResItemDtoV1::from);
 	}
 
-	public ResItemDtoV1 getItemById(String itemId) {
+	public ResItemDtoV1 getItemById(UUID itemId) {
 		Item item = itemRepository.findById(itemId)
 			.orElseThrow(() -> new IllegalArgumentException("Item not found"));
 		return ResItemDtoV1.from(item);
 	}
 
 	@Transactional
-	public ResItemDtoV1 updateItem(String itemId, ReqItemUpdateDtoV1 request) {
+	public ResItemDtoV1 updateItem(UUID itemId, ReqItemUpdateDtoV1 request) {
 		Item item = itemRepository.findById(itemId)
 			.orElseThrow(() -> new IllegalArgumentException("Item not found"));
 
@@ -114,7 +114,7 @@ public class ItemServiceV1 {
 	}
 
 	@Transactional
-	public void deleteItem(String itemId) {
+	public void deleteItem(UUID itemId) {
 		Item item = itemRepository.findById(itemId)
 			.orElseThrow(() -> new IllegalArgumentException("Item not found"));
 
