@@ -251,9 +251,9 @@ public class OrderService {
                 .build();
     }
 
-    public Page<OrderListResponse> searchOrders(OrderSearchCondition condition, Pageable pageable) {
+    public Page<OrderListResponse> searchOrders(User user, OrderSearchCondition condition, Pageable pageable) {
 
-        Page<Order> orderPage = orderRepository.search(condition, pageable);
+        Page<Order> orderPage = orderRepository.search(user, condition, pageable);
         List<Order> orderList = orderPage.getContent();
 
         if (orderList.isEmpty()) {
