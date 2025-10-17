@@ -15,7 +15,7 @@ import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemOptionRepos
 import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemRepository;
 import com.sparta.sparta_eats.cart.infrastructure.repository.CartRepository;
 import com.sparta.sparta_eats.store.entity.Store;
-import com.sparta.sparta_eats.store.infrastructure.repository.StoreRepository;
+import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
 import com.sparta.sparta_eats.user.infrastructure.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;

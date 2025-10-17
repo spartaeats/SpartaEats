@@ -12,7 +12,7 @@ import com.sparta.sparta_eats.cart.presentation.dto.response.ResCreateCartResult
 import com.sparta.sparta_eats.store.entity.Item;
 import com.sparta.sparta_eats.store.entity.Store;
 import com.sparta.sparta_eats.store.infrastructure.repository.ItemRepository;
-import com.sparta.sparta_eats.store.infrastructure.repository.StoreRepository;
+import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
