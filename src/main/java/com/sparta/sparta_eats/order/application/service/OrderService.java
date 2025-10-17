@@ -95,7 +95,6 @@ public class OrderService {
     private List<OrderCreateResponse.ItemResponse> buildAndSaveOrderItem(Order newOrder, OrderCreateRequest request, Map<UUID, Item> itemMap, Map<UUID, ItemOption> itemOptionMap) {
         List<OrderItemOption> orderItemOptionList = new ArrayList<>();
         List<OrderItem> orderItemList = new ArrayList<>();
-        List<OrderCreateResponse.ItemResponse> response = new ArrayList<>();
         request.items()
                 .forEach(itemRequest -> {
                     Item item = itemMap.get(itemRequest.id());
@@ -103,8 +102,7 @@ public class OrderService {
                             .order(newOrder)
                             .item(item)
                             .itemName(item.getName())
-                            // TODO Item에 thumbnailUrl 컬럼 만들어야함
-                            .thumbnailUrl("temp")
+                            .thumbnailUrl(item.getImage())
                             .unitPrice(BigDecimal.valueOf(item.getPrice().longValue()))
                             .quantity(itemRequest.quantity())
                             .optionComboHash("")
@@ -155,9 +153,7 @@ public class OrderService {
 
                     // 4. 최종 ItemResponse DTO 생성
                     return OrderCreateResponse.ItemResponse.builder()
-                            // TODO Store Id UUID로 변경해야함
-                            // 현재는 임시 UUID
-                            .id(UUID.randomUUID())
+                            .id(orderItem.getOrder().getStore().getId())
                             .name(orderItem.getItemName())
                             .quantity(orderItem.getQuantity())
                             .unitPrice(orderItem.getUnitPrice())
@@ -215,9 +211,7 @@ public class OrderService {
                 .status(savedOrder.getStatus())
                 .createdAt(savedOrder.getCreatedAt())
                 .store(OrderCreateResponse.StoreResponse.builder()
-                        // TODO Store id UUID로 변경해야함
-                        // 현재는 임시 UUID
-                        .id(UUID.randomUUID())
+                        .id(store.getId())
                         .name(store.getName()).build())
                 .items(itemResponses)
                 .amounts(OrderCreateResponse.Amounts.builder()
@@ -283,8 +277,7 @@ public class OrderService {
 
                     return OrderListResponse.builder()
                             .id(order.getId())
-                            // TODO storeID UUID로 변경해야함
-                            .storeId(UUID.randomUUID())
+                            .storeId(order.getStore().getId())
                             .storeName(order.getStore().getName())
                             .storeImage(order.getStore().getImage())
                             .items(itemResponses)
@@ -328,8 +321,7 @@ public class OrderService {
                             .toList();
 
                     return OrderSingleResponse.ItemResponse.builder()
-                            // TODO 상품 아이디 UUID로 변경
-                            .id(UUID.randomUUID())
+                            .id(orderItem.getItem().getId())
                             .name(orderItem.getItemName())
                             .basePrice(BigDecimal.valueOf(orderItem.getItem().getPrice().longValue()))
                             .optionsPrice(orderItem.getOptionTotal())
@@ -345,9 +337,7 @@ public class OrderService {
                 .id(order.getId())
                 .status(order.getStatus())
                 .store(OrderSingleResponse.StoreResponse.builder()
-                        // TODO Store id UUID로 변경해야함
-                        // 현재는 임시 UUID
-                        .id(UUID.randomUUID())
+                        .id(store.getId())
                         .name(store.getName())
                         .build())
                 .items(itemResponses)
