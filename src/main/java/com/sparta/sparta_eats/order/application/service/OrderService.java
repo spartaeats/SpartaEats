@@ -235,10 +235,6 @@ public class OrderService {
                 .build();
     }
 
-    public List<OrderListResponse> getOrderList(User user) {
-        return null;
-    }
-
     public OrderSingleResponse getOrderDetail(User user, UUID id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("id와 일치하는 주문이 존재하지 않습니다."));
