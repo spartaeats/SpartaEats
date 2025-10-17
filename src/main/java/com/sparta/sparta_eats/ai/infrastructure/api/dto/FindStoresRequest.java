@@ -7,5 +7,5 @@ import java.util.UUID;
 
 @Builder
 public record FindStoresRequest(UUID storeId,
-                                List<Object> reviewList) {
+                                List<String> reviewList) {
 }

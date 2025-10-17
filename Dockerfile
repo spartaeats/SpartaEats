@@ -3,4 +3,4 @@ WORKDIR /app
 COPY build/libs/*-SNAPSHOT.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
-EXPOSE 3000
+EXPOSE 8080

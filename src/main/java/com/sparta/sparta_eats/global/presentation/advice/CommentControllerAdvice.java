@@ -1,10 +1,13 @@
 package com.sparta.sparta_eats.global.presentation.advice;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -36,4 +39,24 @@ public class CommentControllerAdvice {
 			.status(status)
 			.body(new ErrorResponse(status, message));
 	}
+
+
+    // 클래스 내부에 메서드 2개 추가
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e) {
+        Map<String, List<String>> errors = new HashMap<>();
+        e.getBindingResult().getFieldErrors().forEach(fe -> {
+            errors.computeIfAbsent(fe.getField(), k -> new java.util.ArrayList<>()).add(fe.getDefaultMessage());
+        });
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST, errors));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException e) {
+        // 주로 UNIQUE 제약(멱등성 충돌)에서 발생
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(HttpStatus.CONFLICT, "데이터 무결성 오류(중복 또는 제약 위반)"));
+    }
+
 }

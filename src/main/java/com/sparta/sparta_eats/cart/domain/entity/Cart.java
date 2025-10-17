@@ -1,35 +1,65 @@
 package com.sparta.sparta_eats.cart.domain.entity;
 
-import com.sparta.sparta_eats.global.entity.BaseEntity;
+import com.sparta.sparta_eats.store.domain.entity.Store;
+import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.UuidGenerator;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Cart (장바구니)
+ * - 한 사용자가 한 매장의 상품만 담을 수 있음
+ * - 장바구니에는 여러 개의 CartItem이 연결됨
+ */
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "carts")
-public class Cart extends BaseEntity {
+@Table(name = "p_carts")
+public class Cart {
 
-  @Id
-  @UuidGenerator
-  @Column(name = "id", nullable = false, updatable = false)
-  private UUID id;
+    /** 기본키: UUID */
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
 
-  @Column(name = "user_id", nullable = false, length = 20)
-  private String userId;
+    /** 사용자 (N:1) */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
-  @Column(name = "store_id", nullable = false)
-  private UUID storeId;
+    /** 매장 (N:1) */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id")
+    private Store store;
 
-  @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-  @Builder.Default
-  private List<CartItem> items = new ArrayList<>();
+    /** 장바구니 아이템들 (1:N) */
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartItem> items = new ArrayList<>();
+
+    /** Builder 생성자 — 필요한 필드만 초기화 */
+    @Builder
+    public Cart(User user, Store store) {
+        this.user = user;
+        this.store = store;
+    }
+
+    /** 아이템 추가 (연관관계 관리) */
+    public void addItem(CartItem item) {
+        if (item == null) throw new IllegalArgumentException("item must not be null");
+        items.add(item);
+        item.setCart(this);
+    }
+
+    /** 장바구니 안에 담긴 상품 수 */
+    public int getTotalItemCount() {
+        return items.stream().mapToInt(CartItem::getQuantity).sum();
+    }
+
 }

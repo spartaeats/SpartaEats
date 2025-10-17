@@ -41,6 +41,10 @@ out/
 ### 로컬 설정 파일 제외 ###
 application-test.yml
 application-test.properties
+application-hanbin.yml
 
 ### QueryDSL 등 라이브러리에서 생성 클래스 제외 ###
 generated/
+
+### pem 파일 제외
+sparta_eats.pem
