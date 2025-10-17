@@ -7,6 +7,8 @@ import com.sparta.sparta_eats.address.domain.repository.AddressRepository;
 import com.sparta.sparta_eats.address.infrastructure.api.TmapApiClient;
 import com.sparta.sparta_eats.global.domain.exception.NotFoundException;
 import com.sparta.sparta_eats.item.domain.entity.Item;
+import com.sparta.sparta_eats.item.domain.repository.ItemOptionRepository;
+import com.sparta.sparta_eats.item.domain.repository.ItemRepository;
 import com.sparta.sparta_eats.order.domain.dto.OrderSnapshotDto;
 import com.sparta.sparta_eats.order.domain.entity.Order;
 import com.sparta.sparta_eats.order.domain.entity.OrderItem;
@@ -31,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +42,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderItemOptionRepository orderItemOptionRepository;
+    private final ItemRepository itemRepository;
+    private final ItemOptionRepository itemOptionRepository;
     private final AddressRepository addressRepository;
     private final TmapApiClient tmapApiClient;
 
@@ -61,7 +66,14 @@ public class OrderService {
                 .map(OrderCreateRequest.OrderItemRequest::id)
                 .toList();
 
-        return null;
+        List<Item> items = itemRepository.findAllById(itemIdList);
+
+        if (items.size() != itemIdList.size()) {
+            throw new IllegalArgumentException("존재하지 않거나 유효하지 않은 상품 ID가 포함되어 있습니다.");
+        }
+
+        return items.stream()
+                .collect(Collectors.toMap(Item::getId, Function.identity()));
     }
 
     private Map<UUID, ItemOption> fetchItemOptionMap(OrderCreateRequest request) {
@@ -70,11 +82,17 @@ public class OrderService {
                         .orElse(Collections.emptyList()).stream())
                 .map(OrderCreateRequest.OrderItemRequest.OrderItemOptionRequest::optionId)
                 .toList();
-
-        if (itemOptionIdList.isEmpty())
+        if (itemOptionIdList.isEmpty()) {
             return Collections.emptyMap();
+        }
 
-        return null;
+        List<ItemOption> options = itemOptionRepository.findAllById(itemOptionIdList);
+        if (options.size() != itemOptionIdList.size()) {
+            throw new IllegalArgumentException("존재하지 않거나 유효하지 않은 옵션 ID가 포함되어 있습니다.");
+        }
+
+        return options.stream()
+                .collect(Collectors.toMap(ItemOption::getId, Function.identity()));
     }
 
     private BigDecimal calculateItemTotal(OrderCreateRequest request, Map<UUID, Item> itemMap, Map<UUID, ItemOption> optionMap) {

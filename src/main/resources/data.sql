@@ -14,6 +14,7 @@ INSERT INTO p_user (user_id, nickname, email, phone, password, role, is_public, 
 ('customer001', '홍길동', 'customer001@test.com', '01056789012', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG13AavhdRWsePYR5i', 'CUSTOMER', false, NOW(), NOW(), 'SYSTEM', 'SYSTEM', NOW()),
 ('customer002', '김철수', 'customer002@test.com', '01067890123', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG13AavhdRWsePYR5i', 'CUSTOMER', false, NOW(), NOW(), 'SYSTEM', 'SYSTEM', NOW()),
 ('customer003', '이영희', 'customer003@test.com', '01078901234', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG13AavhdRWsePYR5i', 'CUSTOMER', true, NOW(), NOW(), 'SYSTEM', 'SYSTEM', NOW()),
+('master', '마스터', 'customer04@test.com', '01078901234', 'Master123!', 'MASTER', true, NOW(), NOW(), 'SYSTEM', 'SYSTEM', NOW()),
 ('manager001', '매니저', 'manager@spartaeats.com', '01089012345', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG13AavhdRWsePYR5i', 'MANAGER', true, NOW(), NOW(), 'SYSTEM', 'SYSTEM', NOW());
 
 -- ============================================

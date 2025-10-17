@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/v1")
 @RequiredArgsConstructor
@@ -25,7 +27,7 @@ public class ItemControllerV1 {
 	@PostMapping("/stores/{storeId}/items")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER', 'OWNER')")
 	public ResponseEntity<ResItemDtoV1> createItem(
-		@PathVariable String storeId,
+		@PathVariable UUID storeId,
 		@RequestBody ReqItemCreateDtoV1 request) {
 		ResItemDtoV1 response = itemService.createItem(storeId, request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -35,7 +37,7 @@ public class ItemControllerV1 {
 	@GetMapping("/stores/{storeId}/items")
 	@PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'MASTER', 'OWNER')")
 	public ResponseEntity<Page<ResItemDtoV1>> getItemsByStore(
-		@PathVariable String storeId,
+		@PathVariable UUID storeId,
 		Pageable pageable) {
 		Page<ResItemDtoV1> response = itemService.getItemsByStore(storeId, pageable);
 		return ResponseEntity.ok(response);
@@ -52,7 +54,7 @@ public class ItemControllerV1 {
 	//상품 단건 조회
 	@GetMapping("/items/{itemId}")
 	@PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'MASTER', 'OWNER')")
-	public ResponseEntity<ResItemDtoV1> getItemById(@PathVariable String itemId) {
+	public ResponseEntity<ResItemDtoV1> getItemById(@PathVariable UUID itemId) {
 		ResItemDtoV1 response = itemService.getItemById(itemId);
 		return ResponseEntity.ok(response);
 	}
@@ -61,7 +63,7 @@ public class ItemControllerV1 {
 	@PatchMapping("/items/{itemId}")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER', 'OWNER')")
 	public ResponseEntity<ResItemDtoV1> updateItem(
-		@PathVariable String itemId,
+		@PathVariable UUID itemId,
 		@RequestBody ReqItemUpdateDtoV1 request) {
 		ResItemDtoV1 response = itemService.updateItem(itemId, request);
 		return ResponseEntity.ok(response);
@@ -70,7 +72,7 @@ public class ItemControllerV1 {
 	//상품 삭제 Soft Delete
 	@DeleteMapping("/items/{itemId}")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER', 'OWNER')")
-	public ResponseEntity<Void> deleteItem(@PathVariable String itemId) {
+	public ResponseEntity<Void> deleteItem(@PathVariable UUID itemId) {
 		itemService.deleteItem(itemId);
 		return ResponseEntity.noContent().build();
 	}
