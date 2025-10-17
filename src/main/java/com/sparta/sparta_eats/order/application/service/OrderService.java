@@ -21,7 +21,7 @@ import com.sparta.sparta_eats.order.presentation.dto.request.OrderSearchConditio
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderCreateResponse;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderListResponse;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderSingleResponse;
-import com.sparta.sparta_eats.store.domain.entity.ItemOption;
+import com.sparta.sparta_eats.item.domain.entity.ItemOption;
 import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
