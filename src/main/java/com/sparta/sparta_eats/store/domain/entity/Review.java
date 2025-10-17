@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.sparta.sparta_eats.item.domain.entity.Item;
 
@@ -17,7 +18,7 @@ import com.sparta.sparta_eats.item.domain.entity.Item;
 public class Review {
 	@Id
 	@Column(name = "id", columnDefinition = "UUID")
-	private String id;
+	private UUID id;
 
 	@Column(name = "content", columnDefinition = "VARCHAR(300)")
 	private String content;

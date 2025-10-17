@@ -3,6 +3,8 @@ package com.sparta.sparta_eats.store.domain.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "p_category")
 @Getter
@@ -13,7 +15,7 @@ import lombok.*;
 public class Category {
     @Id
     @Column(name = "id", columnDefinition = "UUID")
-    private String id;
+    private UUID id;
 
     @Column(name = "cate_01", nullable = false, length = 10)
     private String cate01;
