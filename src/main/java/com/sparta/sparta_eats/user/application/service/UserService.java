@@ -181,7 +181,12 @@ public class UserService {
     // 1. 삭제되지 않은 모든 사용자 조회 (페이징)
     Page<User> users = userRepository.findAllByDeletedAtIsNull(pageable);
 
-    // 2. User -> UserResponse 변환
+    // 2. 사용자 목록이 비어있는 경우 예외 처리
+    if (users.isEmpty()) {
+      throw new NotFoundException("조회할 사용자가 없습니다.");
+    }
+
+    // 3. User -> UserResponse 변환
     return users.map(UserResponse::from);
   }
 
