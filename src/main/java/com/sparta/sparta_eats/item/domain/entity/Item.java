@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "p_item")
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 public class Item {
 	@Id
 	@Column(name = "id", columnDefinition = "UUID")
-	private String id;
+	private UUID id;
 
 	@Column(name = "name", nullable = false, length = 255)
 	private String name;

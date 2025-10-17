@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ResItemDtoV1 {
-	private String id;
+	private UUID id;
 	private String name;
 	private String description;
 	private BigInteger price;
@@ -21,9 +22,9 @@ public class ResItemDtoV1 {
 	private String image;
 	private Boolean active;
 	private Boolean soldOut;
-	private String categoryId;
+	private UUID categoryId;
 	private String categoryName;
-	private String storeId;
+	private UUID storeId;
 	private String storeName;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;

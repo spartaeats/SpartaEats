@@ -37,7 +37,7 @@ public class ItemServiceV1 {
 			.orElseThrow(() -> new IllegalArgumentException("Category not found"));
 
 		Item item = Item.builder()
-			.id(UUID.randomUUID().toString())
+			.id(UUID.randomUUID())
 			.name(request.getName())
 			.description(request.getDescription())
 			.price(request.getPrice())
