@@ -1,11 +1,13 @@
-package com.sparta.sparta_eats.cart.domain.repository;
+package com.sparta.sparta_eats.cart.infrastructure.repository;
 
 import com.sparta.sparta_eats.cart.domain.entity.CartItemOption;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface CartItemOptionRepository extends JpaRepository<CartItemOption, UUID> {
-  // 기본 CRUD는 JpaRepository가 제공
-  // 필요한 커스텀 메서드는 팀원들이 추가
+
+    // 특정 라인의 옵션들
+    List<CartItemOption> findByCartItemId(UUID cartItemId);
 }
