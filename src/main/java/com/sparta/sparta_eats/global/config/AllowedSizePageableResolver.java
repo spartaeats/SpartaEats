@@ -8,7 +8,9 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class AllowedSizePageableResolver extends PageableHandlerMethodArgumentResolver {
 
@@ -18,7 +20,8 @@ public class AllowedSizePageableResolver extends PageableHandlerMethodArgumentRe
 
     public AllowedSizePageableResolver(PaginationProperties props) {
         this.defaultSize = props.defaultSize();
-        this.allowedSizes = props.allowedSizes();
+        this.allowedSizes = Optional.ofNullable(props.allowedSizes())
+                .orElse(Collections.emptyList());
         this.oneIndexed = props.oneIndexed();
         setOneIndexedParameters(oneIndexed); // 페이지 번호 1부터 시작할지 여부
     }
@@ -33,7 +36,7 @@ public class AllowedSizePageableResolver extends PageableHandlerMethodArgumentRe
         Pageable pageable = super.resolveArgument(methodParameter, mavContainer, webRequest, binderFactory);
 
         int size = pageable.getPageSize();
-        if (!allowedSizes.contains(size)) {
+        if (allowedSizes.isEmpty() || !allowedSizes.contains(size)) {
             size = defaultSize;
         }
 
