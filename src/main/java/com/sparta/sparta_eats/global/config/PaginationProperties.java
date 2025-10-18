@@ -9,4 +9,5 @@ public record PaginationProperties(
         int defaultSize,
         List<Integer> allowedSizes,
         boolean oneIndexed
-) { }
+) {
+}

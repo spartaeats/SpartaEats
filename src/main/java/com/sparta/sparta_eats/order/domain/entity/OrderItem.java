@@ -3,10 +3,7 @@ package com.sparta.sparta_eats.order.domain.entity;
 import com.sparta.sparta_eats.global.entity.BaseEntity;
 import com.sparta.sparta_eats.item.domain.entity.Item;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -22,6 +19,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "p_order_items")
+@ToString
 public class OrderItem extends BaseEntity {
 
     @Id
@@ -119,9 +117,9 @@ public class OrderItem extends BaseEntity {
      * 총합 재계산 (단가×수량 + 옵션)
      */
     public void recalcLinePrice() {
-        this.linePrice = unitPrice
-                .multiply(BigDecimal.valueOf(quantity))
-                .add(optionTotal);
+        if(optionTotal == null || optionTotal.equals(BigDecimal.ZERO))
+            this.linePrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        else this.linePrice = unitPrice.multiply(BigDecimal.valueOf(quantity)).add(optionTotal);
     }
 
     /**

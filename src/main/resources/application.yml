@@ -14,13 +14,17 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate.format_sql: true
     defer-datasource-initialization: true
   sql:
     init:
-      mode: always
+      mode: never
+
+  security:
+    filter:
+      dispatcher-types: request, error
 
 logging:
   level:
@@ -53,3 +57,9 @@ toss:
   secret-key: ${TOSS_SECRET_KEY}
   client-key: ${TOSS_CLIENT_KEY:}
   mock-enabled: ${TOSS_MOCK:true} # 테스트/모의 전환용
+
+app:
+  pagination:
+    default-size: 10  # 기본 페이지 크기
+    allowed-sizes: [10, 20, 50, 100] # 허용할 페이지 크기 목록
+    one-indexed: false # 페이지 번호를 0부터 시작할지 (false), 1부터 시작할지 (true)

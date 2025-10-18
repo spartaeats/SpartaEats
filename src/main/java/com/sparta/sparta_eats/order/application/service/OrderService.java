@@ -23,8 +23,10 @@ import com.sparta.sparta_eats.order.presentation.dto.response.OrderListResponse;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderSingleResponse;
 import com.sparta.sparta_eats.item.domain.entity.ItemOption;
 import com.sparta.sparta_eats.store.domain.entity.Store;
+import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -32,16 +34,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderItemOptionRepository orderItemOptionRepository;
+    private final StoreRepository storeRepository;
     private final ItemRepository itemRepository;
     private final ItemOptionRepository itemOptionRepository;
     private final AddressRepository addressRepository;
@@ -51,8 +56,7 @@ public class OrderService {
         return Order.builder()
                 .user(user)
                 .store(store)
-                // TODO request에 Fulfillment 포함 필요
-                .fulfillmentType(Order.FulfillmentType.PICKUP)
+                .fulfillmentType(request.fulfillmentType())
                 .contactPhone(request.contactPhone())
                 .memoToOwner(request.memoToOwner())
                 .memoToRider(request.memoToRider())
@@ -113,11 +117,20 @@ public class OrderService {
     private List<OrderCreateResponse.ItemResponse> buildAndSaveOrderItem(Order newOrder, OrderCreateRequest request, Map<UUID, Item> itemMap, Map<UUID, ItemOption> itemOptionMap) {
         List<OrderItemOption> orderItemOptionList = new ArrayList<>();
         List<OrderItem> orderItemList = new ArrayList<>();
+        log.warn("#### buildAndSaveOrderItem Method init");
         request.items()
                 .forEach(itemRequest -> {
+                    log.info("#### request.items().forEach roof init");
                     Item item = itemMap.get(itemRequest.id());
+                    log.info("#### item: {}", item.toString());
+                    BigDecimal optionTotal = Optional.ofNullable(itemRequest.options())
+                            .orElse(Collections.emptyList()).stream()
+                            .map(optionRequest -> itemOptionMap.get(optionRequest.optionId()))
+                            .map(itemOption -> BigDecimal.valueOf(itemOption.getAddPrice().longValue()))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
                     OrderItem orderItem = OrderItem.builder()
                             .order(newOrder)
+                            .optionTotal(optionTotal)
                             .item(item)
                             .itemName(item.getName())
                             .thumbnailUrl(item.getImage())
@@ -125,6 +138,7 @@ public class OrderService {
                             .quantity(itemRequest.quantity())
                             .optionComboHash("")
                             .build();
+                    log.info("#### itemRequest: \n{}", itemRequest.toString());
 
                     Optional.ofNullable(itemRequest.options())
                             .orElse(Collections.emptyList())
@@ -147,7 +161,7 @@ public class OrderService {
 
         List<OrderItem> savedOrderItems = orderItemRepository.saveAll(orderItemList);
         List<OrderItemOption> savedOrderItemOptions = orderItemOptionRepository.saveAll(orderItemOptionList);
-
+        log.info("#### savedOrderItems: {}", savedOrderItems.get(0));
         Map<UUID, List<OrderItemOption>> optionsMapByItemId = savedOrderItemOptions.stream()
                 .collect(Collectors.groupingBy(
                         // Key: 부모 OrderItem의 ID를 가져옴
@@ -190,6 +204,9 @@ public class OrderService {
                 .build();
 
         BigDecimal deliveryFee = BigDecimal.valueOf(tmapApiClient.getDistance(addressSupplyDto.coordinate(), storeCoordinate) * 100L);
+        log.info("#### deliveryFee: {}", deliveryFee);
+        if(deliveryFee == null)
+            deliveryFee = BigDecimal.ZERO;
 
         return OrderSnapshotDto.builder()
                 .itemTotal(itemTotal)
@@ -209,9 +226,8 @@ public class OrderService {
         Address address = addressRepository.findById(request.addressId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
         // TODO Store 객체의 longitude, latitude를 @Embedded Coordinate로 변경해야함.
-        // TODO StoreRepository에서 store 정보를 불러와야함
-        // 현재는 임시 객체
-        Store store = Store.builder().longitude(BigDecimal.ONE).latitude(BigDecimal.ONE).build();
+        Store store = storeRepository.findById(request.storeId())
+                .orElseThrow(() -> new NotFoundException("아이디와 일치하는 매장이 존재하지 않습니다."));
         AddressSupplyDto addressSupplyDto = address.toSupplyDto();
 
         Order newOrder = toOrderEntity(user, store, request);
@@ -221,6 +237,7 @@ public class OrderService {
         newOrder.assignItemSnapshot(snapshotDto);
 
         Order savedOrder = orderRepository.save(newOrder);
+        log.info("#### savedOrder: {}", savedOrder);
         List<OrderCreateResponse.ItemResponse> itemResponses = buildAndSaveOrderItem(newOrder, request, itemMap, itemOptionMap);
 
 
@@ -251,9 +268,9 @@ public class OrderService {
                 .build();
     }
 
-    public Page<OrderListResponse> searchOrders(OrderSearchCondition condition, Pageable pageable) {
+    public Page<OrderListResponse> searchOrders(User user, OrderSearchCondition condition, Pageable pageable) {
 
-        Page<Order> orderPage = orderRepository.search(condition, pageable);
+        Page<Order> orderPage = orderRepository.search(user, condition, pageable);
         List<Order> orderList = orderPage.getContent();
 
         if (orderList.isEmpty()) {

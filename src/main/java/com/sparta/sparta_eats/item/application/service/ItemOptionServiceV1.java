@@ -30,7 +30,7 @@ public class ItemOptionServiceV1 {
 
 	//옵션 생성
 	@Transactional
-	public ResItemOptionDtoV1 createItemOption(String itemId, ReqItemOptionCreateDtoV1 request) {
+	public ResItemOptionDtoV1 createItemOption(UUID itemId, ReqItemOptionCreateDtoV1 request) {
 
 		Item item = itemRepository.findById(itemId)
 			.orElseThrow(() -> new IllegalArgumentException("Item not found"));
@@ -51,7 +51,7 @@ public class ItemOptionServiceV1 {
 	}
 
 	//상품별 옵션 목록 조회
-	public Page<ResItemOptionDtoV1> getOptionsByItem(String itemId, Pageable pageable) {
+	public Page<ResItemOptionDtoV1> getOptionsByItem(UUID itemId, Pageable pageable) {
 		if (!itemRepository.existsById(itemId)) {
 			throw new IllegalArgumentException("Item not found");
 		}
@@ -61,7 +61,7 @@ public class ItemOptionServiceV1 {
 	}
 
 	//옵션 단건 조회
-	public ResItemOptionDtoV1 getOptionById(String optionId) {
+	public ResItemOptionDtoV1 getOptionById(UUID optionId) {
 
 		ItemOption itemOption = itemOptionRepository.findById(optionId)
 			.orElseThrow(() -> new IllegalArgumentException("Option not found"));
@@ -71,7 +71,7 @@ public class ItemOptionServiceV1 {
 
 	//옵션 수정
 	@Transactional
-	public ResItemOptionDtoV1 updateOption(String optionId, ReqItemOptionUpdateDtoV1 request) {
+	public ResItemOptionDtoV1 updateOption(UUID optionId, ReqItemOptionUpdateDtoV1 request) {
 
 		ItemOption itemOption = itemOptionRepository.findById(optionId)
 			.orElseThrow(() -> new IllegalArgumentException("Option not found"));
@@ -95,7 +95,7 @@ public class ItemOptionServiceV1 {
 
 	//옵션 삭제
 	@Transactional
-	public void deleteOption(String optionId) {
+	public void deleteOption(UUID optionId) {
 		ItemOption itemOption = itemOptionRepository.findById(optionId)
 			.orElseThrow(() -> new IllegalArgumentException("Option not found"));
 

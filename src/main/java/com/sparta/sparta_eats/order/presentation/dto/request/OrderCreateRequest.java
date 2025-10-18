@@ -1,5 +1,6 @@
 package com.sparta.sparta_eats.order.presentation.dto.request;
 
+import com.sparta.sparta_eats.order.domain.entity.Order;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -9,18 +10,19 @@ import java.util.UUID;
 
 @Builder
 public record OrderCreateRequest(
-        @NotNull
+        @NotNull(message = "{validation.order.storeId.notNull}")
         UUID storeId,
-        @NotEmpty
+        @NotEmpty(message = "{validation.order.items.notEmpty}")
         List<OrderItemRequest> items,
-        @NotNull
+        @NotNull(message = "{validation.order.addressId.notNull}")
         UUID addressId,
         String memoToOwner,
         String memoToRider,
         String contactPhone,
         Boolean noCutlery,
         Boolean noSideDishes,
-        String source) {
+        String source,
+        Order.FulfillmentType fulfillmentType) {
 
     public OrderCreateRequest {
         if (source.isBlank()) {
@@ -29,15 +31,15 @@ public record OrderCreateRequest(
     }
 
     public record OrderItemRequest(
-            @NotNull
+            @NotNull(message = "{validation.order.items.id.notNull}")
             UUID id,
-            @NotNull
+            @NotNull(message = "{validation.order.items.quantity.notNull}")
             Integer quantity,
             List<OrderItemOptionRequest> options
 
     ) {
         public record OrderItemOptionRequest(
-                @NotNull
+                @NotNull(message = "{validation.order.items.options.optionId.notNull}")
                 UUID optionId
         ) {
         }
