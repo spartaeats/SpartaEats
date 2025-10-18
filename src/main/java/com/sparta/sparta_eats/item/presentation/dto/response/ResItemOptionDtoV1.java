@@ -25,7 +25,7 @@ public class ResItemOptionDtoV1 {
 
 	private BigInteger addPrice;
 
-	private String itemId;
+	private UUID itemId;
 
 	private String itemName;
 

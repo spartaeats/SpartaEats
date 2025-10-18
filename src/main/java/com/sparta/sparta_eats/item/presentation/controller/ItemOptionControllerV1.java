@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/v1")
 @RequiredArgsConstructor
@@ -25,7 +27,7 @@ public class ItemOptionControllerV1 {
 	@PostMapping("/items/{itemId}/options")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER', 'OWNER')") // MANAGER, MASTER, OWNER만 접근 가능
 	public ResponseEntity<ResItemOptionDtoV1> createItemOption(
-		@PathVariable String itemId,
+		@PathVariable UUID itemId,
 		@RequestBody ReqItemOptionCreateDtoV1 request) {
 
 		ResItemOptionDtoV1 response = itemOptionService.createItemOption(itemId, request);
@@ -37,7 +39,7 @@ public class ItemOptionControllerV1 {
 	@GetMapping("/items/{itemId}/options")
 	@PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'MASTER', 'OWNER')") // 모든 역할 접근 가능
 	public ResponseEntity<Page<ResItemOptionDtoV1>> getOptionsByItem(
-		@PathVariable String itemId,
+		@PathVariable UUID itemId,
 		Pageable pageable) {
 
 		Page<ResItemOptionDtoV1> response = itemOptionService.getOptionsByItem(itemId, pageable);
@@ -47,7 +49,7 @@ public class ItemOptionControllerV1 {
 	//옵션 단건 조회
 	@GetMapping("/options/{optionId}")
 	@PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'MASTER', 'OWNER')") // 모든 역할 접근 가능
-	public ResponseEntity<ResItemOptionDtoV1> getOptionById(@PathVariable String optionId) {
+	public ResponseEntity<ResItemOptionDtoV1> getOptionById(@PathVariable UUID optionId) {
 
 		ResItemOptionDtoV1 response = itemOptionService.getOptionById(optionId);
 		return ResponseEntity.ok(response);
@@ -57,7 +59,7 @@ public class ItemOptionControllerV1 {
 	@PatchMapping("/options/{optionId}")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER', 'OWNER')") // MANAGER, MASTER, OWNER만 접근 가능
 	public ResponseEntity<ResItemOptionDtoV1> updateOption(
-		@PathVariable String optionId,
+		@PathVariable UUID optionId,
 		@RequestBody ReqItemOptionUpdateDtoV1 request) {
 
 		ResItemOptionDtoV1 response = itemOptionService.updateOption(optionId, request);
@@ -67,7 +69,7 @@ public class ItemOptionControllerV1 {
 	//옵션 삭제 (Soft Delete)
 	@DeleteMapping("/options/{optionId}")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER', 'OWNER')") // MANAGER, MASTER, OWNER만 접근 가능
-	public ResponseEntity<Void> deleteOption(@PathVariable String optionId) {
+	public ResponseEntity<Void> deleteOption(@PathVariable UUID optionId) {
 
 		itemOptionService.deleteOption(optionId);
 
