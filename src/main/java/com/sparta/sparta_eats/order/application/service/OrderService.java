@@ -23,6 +23,7 @@ import com.sparta.sparta_eats.order.presentation.dto.response.OrderListResponse;
 import com.sparta.sparta_eats.order.presentation.dto.response.OrderSingleResponse;
 import com.sparta.sparta_eats.item.domain.entity.ItemOption;
 import com.sparta.sparta_eats.store.domain.entity.Store;
+import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -42,6 +43,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderItemOptionRepository orderItemOptionRepository;
+    private final StoreRepository storeRepository;
     private final ItemRepository itemRepository;
     private final ItemOptionRepository itemOptionRepository;
     private final AddressRepository addressRepository;
@@ -51,8 +53,7 @@ public class OrderService {
         return Order.builder()
                 .user(user)
                 .store(store)
-                // TODO request에 Fulfillment 포함 필요
-                .fulfillmentType(Order.FulfillmentType.PICKUP)
+                .fulfillmentType(request.fulfillmentType())
                 .contactPhone(request.contactPhone())
                 .memoToOwner(request.memoToOwner())
                 .memoToRider(request.memoToRider())
@@ -209,9 +210,8 @@ public class OrderService {
         Address address = addressRepository.findById(request.addressId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주소입니다."));
         // TODO Store 객체의 longitude, latitude를 @Embedded Coordinate로 변경해야함.
-        // TODO StoreRepository에서 store 정보를 불러와야함
-        // 현재는 임시 객체
-        Store store = Store.builder().longitude(BigDecimal.ONE).latitude(BigDecimal.ONE).build();
+        Store store = storeRepository.findById(request.storeId())
+                .orElseThrow(() -> new NotFoundException("아이디와 일치하는 매장이 존재하지 않습니다."));
         AddressSupplyDto addressSupplyDto = address.toSupplyDto();
 
         Order newOrder = toOrderEntity(user, store, request);
@@ -251,9 +251,9 @@ public class OrderService {
                 .build();
     }
 
-    public Page<OrderListResponse> searchOrders(OrderSearchCondition condition, Pageable pageable) {
+    public Page<OrderListResponse> searchOrders(User user, OrderSearchCondition condition, Pageable pageable) {
 
-        Page<Order> orderPage = orderRepository.search(condition, pageable);
+        Page<Order> orderPage = orderRepository.search(user, condition, pageable);
         List<Order> orderList = orderPage.getContent();
 
         if (orderList.isEmpty()) {

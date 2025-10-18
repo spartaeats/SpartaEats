@@ -6,6 +6,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sparta.sparta_eats.order.domain.entity.Order;
 import com.sparta.sparta_eats.order.domain.repository.OrderSearchRepository;
 import com.sparta.sparta_eats.order.presentation.dto.request.OrderSearchCondition;
+import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -29,11 +30,13 @@ public class OrderRepositoryImpl implements OrderSearchRepository {
 
 
     @Override
-    public Page<Order> search(OrderSearchCondition condition, Pageable pageable) {
+    public Page<Order> search(User user, OrderSearchCondition condition, Pageable pageable) {
         List<Order> content = queryFactory
                 .selectFrom(order)
                 .join(order.store, store).fetchJoin()
-                .where(addressContains(condition.address()),
+                .where(
+                        userEq(user),
+                        addressContains(condition.address()),
                         betweenDate(condition.monthFrom(), condition.monthTo()),
                         orderStatusEq(condition.orderOutcome()),
                         textSearch(condition.q()))
@@ -76,6 +79,10 @@ public class OrderRepositoryImpl implements OrderSearchRepository {
             // 잘못된 orderOutcome 값이 들어올 경우 무시
             return null;
         }
+    }
+
+    private BooleanExpression userEq(User user) {
+        return order.user.eq(user);
     }
 
     /**

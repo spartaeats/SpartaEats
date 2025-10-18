@@ -12,6 +12,8 @@ import com.sparta.sparta_eats.address.presentation.dto.response.AddressDeleteRes
 import com.sparta.sparta_eats.address.presentation.dto.response.AddressResponseV1;
 import com.sparta.sparta_eats.address.presentation.dto.response.DistanceResponse;
 import com.sparta.sparta_eats.global.domain.exception.NotFoundException;
+import com.sparta.sparta_eats.store.domain.entity.Store;
+import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ public class AddressServiceV1 {
     private final AddressRepository addressRepository;
     private final KakaoApiClient kakaoApiClient;
     private final TmapApiClient tmapApiClient;
+    private final StoreRepository storeRepository;
 
     private Address toEntity(AddressRequestV1 request) {
         return Address.builder()
@@ -97,11 +100,13 @@ public class AddressServiceV1 {
 
     public DistanceResponse getDistanceInfo(UUID addressId, UUID storeId) {
         LocationInfo start = addressRepository.findById(addressId).orElseThrow().extractLocationInfo();
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new NotFoundException("아이디와 일치하는 매장이 존재하지 않습니다."));
         LocationInfo target = LocationInfo.builder()
-                .address("서울특별시 종로구 새문안로5길 37 (도렴동)")
+                .address(store.getAddress())
                 .coordinate(Coordinate.builder()
-                        .addrLng(BigDecimal.valueOf(126.974213132))
-                        .addrLat(BigDecimal.valueOf(37.573653031))
+                        .addrLng(store.getLongitude())
+                        .addrLat(store.getLatitude())
                         .build())
                 .name("무봉리 토종순대국 광화문점")
                 .build();
