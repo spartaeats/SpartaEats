@@ -7,10 +7,7 @@ import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.order.domain.dto.OrderSnapshotDto;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,6 +23,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "p_orders")
+@ToString
 public class Order extends BaseEntity {
 
     @Id

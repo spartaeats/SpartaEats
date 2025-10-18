@@ -26,6 +26,7 @@ import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -33,10 +34,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -114,11 +117,20 @@ public class OrderService {
     private List<OrderCreateResponse.ItemResponse> buildAndSaveOrderItem(Order newOrder, OrderCreateRequest request, Map<UUID, Item> itemMap, Map<UUID, ItemOption> itemOptionMap) {
         List<OrderItemOption> orderItemOptionList = new ArrayList<>();
         List<OrderItem> orderItemList = new ArrayList<>();
+        log.warn("#### buildAndSaveOrderItem Method init");
         request.items()
                 .forEach(itemRequest -> {
+                    log.info("#### request.items().forEach roof init");
                     Item item = itemMap.get(itemRequest.id());
+                    log.info("#### item: {}", item.toString());
+                    BigDecimal optionTotal = Optional.ofNullable(itemRequest.options())
+                            .orElse(Collections.emptyList()).stream()
+                            .map(optionRequest -> itemOptionMap.get(optionRequest.optionId()))
+                            .map(itemOption -> BigDecimal.valueOf(itemOption.getAddPrice().longValue()))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
                     OrderItem orderItem = OrderItem.builder()
                             .order(newOrder)
+                            .optionTotal(optionTotal)
                             .item(item)
                             .itemName(item.getName())
                             .thumbnailUrl(item.getImage())
@@ -126,6 +138,7 @@ public class OrderService {
                             .quantity(itemRequest.quantity())
                             .optionComboHash("")
                             .build();
+                    log.info("#### itemRequest: \n{}", itemRequest.toString());
 
                     Optional.ofNullable(itemRequest.options())
                             .orElse(Collections.emptyList())
@@ -148,7 +161,7 @@ public class OrderService {
 
         List<OrderItem> savedOrderItems = orderItemRepository.saveAll(orderItemList);
         List<OrderItemOption> savedOrderItemOptions = orderItemOptionRepository.saveAll(orderItemOptionList);
-
+        log.info("#### savedOrderItems: {}", savedOrderItems.get(0));
         Map<UUID, List<OrderItemOption>> optionsMapByItemId = savedOrderItemOptions.stream()
                 .collect(Collectors.groupingBy(
                         // Key: 부모 OrderItem의 ID를 가져옴
@@ -191,6 +204,9 @@ public class OrderService {
                 .build();
 
         BigDecimal deliveryFee = BigDecimal.valueOf(tmapApiClient.getDistance(addressSupplyDto.coordinate(), storeCoordinate) * 100L);
+        log.info("#### deliveryFee: {}", deliveryFee);
+        if(deliveryFee == null)
+            deliveryFee = BigDecimal.ZERO;
 
         return OrderSnapshotDto.builder()
                 .itemTotal(itemTotal)
@@ -221,6 +237,7 @@ public class OrderService {
         newOrder.assignItemSnapshot(snapshotDto);
 
         Order savedOrder = orderRepository.save(newOrder);
+        log.info("#### savedOrder: {}", savedOrder);
         List<OrderCreateResponse.ItemResponse> itemResponses = buildAndSaveOrderItem(newOrder, request, itemMap, itemOptionMap);
 
 

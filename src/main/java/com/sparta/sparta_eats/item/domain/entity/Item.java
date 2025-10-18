@@ -16,6 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class Item {
 	@Id
 	@Column(name = "id", columnDefinition = "UUID")

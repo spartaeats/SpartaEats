@@ -116,6 +116,8 @@ public class AddressServiceV1 {
         int distance = tmapApiClient.getDistance(start.getCoordinate(), target.getCoordinate());
         int time = tmapApiClient.getTime(start.getCoordinate(), target.getCoordinate());
         charge += (distance - 2000) / 1000 * 100;
+        if(charge < 0)
+            charge = 0;
 
         return DistanceResponse.builder()
                 .start(start)
