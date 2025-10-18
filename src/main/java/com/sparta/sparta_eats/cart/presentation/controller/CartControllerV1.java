@@ -208,13 +208,13 @@ public class CartControllerV1 {
         // 1. 매장 정보 조회
         Store store = storeRepository.findById(s.storeId())
                 .orElse(new Store()); // 기본값으로 빈 객체
-
+        
         // 2. 상품 정보들 조회
         List<UUID> itemIds = s.items().stream()
                 .map(ci -> ci.itemId())
                 .toList();
         List<Item> items = itemRepository.findAllById(itemIds);
-
+        
         // 3. 상품별 가격 계산
         List<ResCartV1.Item> resItems = s.items().stream().map(ci -> {
             // 해당 상품 찾기

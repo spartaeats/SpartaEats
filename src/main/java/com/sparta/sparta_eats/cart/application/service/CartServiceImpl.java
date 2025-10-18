@@ -10,6 +10,8 @@ import com.sparta.sparta_eats.cart.application.exception.InvalidQuantityExceptio
 import com.sparta.sparta_eats.cart.application.exception.StoreMismatchException;
 import com.sparta.sparta_eats.cart.domain.entity.Cart;
 import com.sparta.sparta_eats.cart.domain.entity.CartItem;
+import com.sparta.sparta_eats.cart.domain.entity.CartItemOption;
+import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemOptionRepository;
 import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemRepository;
 import com.sparta.sparta_eats.cart.infrastructure.repository.CartRepository;
 import com.sparta.sparta_eats.item.domain.entity.Item;
@@ -18,6 +20,7 @@ import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import com.sparta.sparta_eats.user.infrastructure.repository.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -216,32 +219,32 @@ public class CartServiceImpl implements CartService {
 
         // 사용자의 장바구니 조회 (items와 options까지 함께 로딩)
         Cart cart = cartRepository.findWithItemsByUser(user).orElse(null);
-
+        
         if (cart == null) {
             return null; // 장바구니가 없음
         }
-
+        
         // 장바구니가 있으면 CartSnapshot으로 변환
         return toSnapshot(cart);
     }
-
+    
     @Override
     public CartSnapshot changeCartItemQuantity(String userId, UUID cartItemId, int quantity) {
         // 1. 수량 검증
         if (quantity < 0) {
             throw new InvalidQuantityException("수량은 0 이상이어야 합니다");
         }
-
+        
         // 2. 장바구니 아이템 조회 및 권한 확인
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new CartItemNotFoundException("장바구니 아이템을 찾을 수 없습니다: " + cartItemId));
-
+        
         // 3. 사용자 권한 확인 (본인의 장바구니인지 확인)
         Cart cart = cartItem.getCart();
         if (!Objects.equals(cart.getUser().getUserId(), userId)) {
             throw new ForbiddenCartAccessException();
         }
-
+        
         // 4. 수량 변경 처리
         if (quantity == 0) {
             // 수량이 0이면 해당 아이템 삭제
@@ -250,7 +253,7 @@ public class CartServiceImpl implements CartService {
             // 수량 변경
             cartItem.increaseQuantity(quantity - cartItem.getQuantity());
         }
-
+        
         // 5. 업데이트된 장바구니 스냅샷 반환
         Cart updatedCart = cartRepository.findWithItemsByIdAndUser(cart.getId(), cart.getUser())
                 .orElseThrow(() -> new CartNotFoundException());
