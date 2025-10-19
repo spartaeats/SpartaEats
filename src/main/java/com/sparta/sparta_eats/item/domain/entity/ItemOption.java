@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigInteger;
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "p_item_option")
@@ -15,9 +18,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class ItemOption {
+
+	@EqualsAndHashCode.Include
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
-	@Column(name = "id", nullable = false, updatable = false)
+	@JdbcTypeCode(Types.VARCHAR)
+	@Column(name = "id", columnDefinition = "char(36)", nullable = false, updatable = false)
 	private UUID id;
 
 	@Column(name = "name", nullable = false, length = 100)
@@ -41,7 +47,7 @@ public class ItemOption {
 	@Column(name = "updated_by", length = 100)
 	private String updatedBy;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "item_id", nullable = false)
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "item_id", nullable = false, columnDefinition = "char(36)")
 	private Item item;
 }

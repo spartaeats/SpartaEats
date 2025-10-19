@@ -2,12 +2,16 @@ package com.sparta.sparta_eats.item.domain.entity;
 
 import com.sparta.sparta_eats.store.domain.entity.ItemCategory;
 import com.sparta.sparta_eats.store.domain.entity.Store;
+
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigInteger;
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "p_item")
@@ -19,7 +23,9 @@ import java.util.UUID;
 @ToString
 public class Item {
 	@Id
-	@Column(name = "id", columnDefinition = "UUID")
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@JdbcTypeCode(Types.VARCHAR)
+	@Column(name = "id", columnDefinition = "char(36)", nullable = false, updatable = false)
 	private UUID id;
 
 	@Column(name = "name", nullable = false, length = 255)
