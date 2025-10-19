@@ -329,18 +329,16 @@ public class OrderService {
         return new PageImpl<>(responseContent, pageable, orderPage.getTotalElements());
     }
 
+    @Transactional(readOnly = true)
     public OrderSingleResponse getOrderDetail(User user, UUID id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("id와 일치하는 주문이 존재하지 않습니다."));
-        List<OrderItem> orderItemList = orderItemRepository.findAllByOrder(order);
+        List<OrderItem> orderItemList = orderItemRepository.findAllByOrderWithItem(order);
         List<OrderItemOption> allOptions = orderItemOptionRepository.findAllByOrderItemIn(orderItemList);
         Store store = order.getStore();
 
         Map<UUID, List<OrderItemOption>> optionsMapByOrderItemId = allOptions.stream()
-                .collect(Collectors.groupingBy(
-                        // Key: 각 옵션의 부모인 OrderItem의 ID
-                        option -> option.getOrderItem().getId()
-                ));
+                .collect(Collectors.groupingBy(option -> option.getOrderItem().getId()));
 
         List<OrderSingleResponse.ItemResponse> itemResponses = orderItemList.stream()
                 .map(orderItem -> {
