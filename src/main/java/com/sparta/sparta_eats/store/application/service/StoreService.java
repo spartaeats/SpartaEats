@@ -34,9 +34,9 @@ public class StoreService {
     @Transactional
     public StoreResponseDto registerStore(StoreRequestDto requestDto, User currentUser) {
         // 현재 로그인한 사용자가 점주인지 확인
-        if (currentUser.getRole() != UserRole.OWNER) {
+        if (currentUser.getRole().ordinal() <  UserRole.OWNER.ordinal()) {
             // 사용자 권한 관련 예외처리는 SecurityLayer에서 처리할 수도 있습니다.
-            throw new NotFoundException();
+            throw new UnAuthorizedException("일반 고객은 매장 등록 서비스를 이용할 수 없습니다.");
         }
 
         // 카테고리 존재 여부 확인

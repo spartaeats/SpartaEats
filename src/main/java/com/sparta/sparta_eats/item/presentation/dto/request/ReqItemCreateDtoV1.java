@@ -3,6 +3,7 @@ package com.sparta.sparta_eats.item.presentation.dto.request;
 import lombok.*;
 
 import java.math.BigInteger;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -17,5 +18,5 @@ public class ReqItemCreateDtoV1 {
 	private String image;
 	private Boolean active;
 	private Boolean soldOut;
-	private String categoryId;
+	private UUID categoryId;
 }
