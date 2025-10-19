@@ -18,8 +18,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @AllArgsConstructor
 @Builder
 public class ItemOption {
-
-	@EqualsAndHashCode.Include
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@JdbcTypeCode(Types.VARCHAR)
