@@ -76,7 +76,7 @@ com.spartaeats
 ### 2-3. API Docs
 
 - **문서화 도구:** Swagger 3.0 (SpringDoc OpenAPI)
-- **Swagger UI:** http://localhost:8080/swagger-ui.html
+- **Swagger UI:** [http://sparta-eats.p-e.kr/swagger-ui/index.html#/]
 
 **주요 엔드포인트**
 - `/v1/auth/**` : 회원가입, 로그인
