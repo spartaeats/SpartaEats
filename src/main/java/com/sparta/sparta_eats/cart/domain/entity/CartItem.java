@@ -8,7 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -46,16 +46,20 @@ public class CartItem extends BaseEntity {
     private int quantity;
 
     /** 상품 단가 */
-    @Column(name = "item_price", nullable = false)
-    private BigInteger itemPrice;
+    @Column(name = "item_price", nullable = false, precision = 19, scale = 0)
+    private BigDecimal itemPrice;
 
     /** 옵션 총합 금액 */
-    @Column(name = "option_total_price", nullable = false)
-    private BigInteger optionTotalPrice = BigInteger.ZERO;
+    @Column(name = "option_total_price", nullable = false, precision = 19, scale = 0)
+    private BigDecimal optionTotalPrice = BigDecimal.ZERO;
 
     /** 상품 + 옵션 총합 */
-    @Column(name = "total_price", nullable = false)
-    private BigInteger totalPrice;
+    @Column(name = "total_price", nullable = false, precision = 19, scale = 0)
+    private BigDecimal totalPrice;
+
+    // 메뉴+옵션 조합 해시
+    @Column(name = "option_combo_hash", nullable = false, length = 128)
+    private String optionComboHash = ""; // 기본값 설정
 
     /** 옵션들 (1:N) */
     @OneToMany(mappedBy = "cartItem", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -63,11 +67,12 @@ public class CartItem extends BaseEntity {
 
     /** 생성자 Builder */
     @Builder
-    public CartItem(Item item, int quantity, BigInteger itemPrice) {
+    public CartItem(Item item, int quantity, BigDecimal itemPrice) {
         this.item = item;
         this.quantity = quantity;
         this.itemPrice = itemPrice;
-        this.totalPrice = itemPrice.multiply(BigInteger.valueOf(quantity));
+        this.totalPrice = itemPrice.multiply(BigDecimal.valueOf(quantity));
+        this.optionComboHash = ""; // 기본값 설정
     }
 
     public void setCart(Cart cart) {
@@ -77,8 +82,10 @@ public class CartItem extends BaseEntity {
     /* ===== 비즈니스 메서드 ===== */
 
     public void increaseQuantity(int amount) {
-        if (amount <= 0) return;
         this.quantity += amount;
+        if (this.quantity < 0) {
+            this.quantity = 0;
+        }
     }
 
     public void decreaseQuantity(int amount) {

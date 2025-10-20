@@ -11,7 +11,8 @@ public record CartSnapshot(
         UUID storeId,
         List<CartItemSnapshot> items,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID addressId
 ) {
     public record CartItemSnapshot(
             UUID id,

@@ -11,19 +11,20 @@ import com.sparta.sparta_eats.cart.application.exception.StoreMismatchException;
 import com.sparta.sparta_eats.cart.domain.entity.Cart;
 import com.sparta.sparta_eats.cart.domain.entity.CartItem;
 import com.sparta.sparta_eats.cart.domain.entity.CartItemOption;
-import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemOptionRepository;
 import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemRepository;
+import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemOptionRepository;
 import com.sparta.sparta_eats.cart.infrastructure.repository.CartRepository;
 import com.sparta.sparta_eats.item.domain.entity.Item;
 import com.sparta.sparta_eats.item.domain.repository.ItemRepository;
 import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
+import com.sparta.sparta_eats.item.domain.repository.ItemOptionRepository;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import com.sparta.sparta_eats.user.infrastructure.repository.UserRepository;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -38,17 +39,23 @@ public class CartServiceImpl implements CartService {
     private final ItemRepository itemRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+    private final CartItemOptionRepository cartItemOptionRepository;
+    private final ItemOptionRepository itemOptionRepository;
 
     public CartServiceImpl(UserRepository userRepository,
                            StoreRepository storeRepository,
                            ItemRepository itemRepository,
                            CartRepository cartRepository,
-                           CartItemRepository cartItemRepository) {
+                           CartItemRepository cartItemRepository,
+                           CartItemOptionRepository cartItemOptionRepository,
+                           ItemOptionRepository itemOptionRepository) {
         this.userRepository = userRepository;
         this.storeRepository = storeRepository;
         this.itemRepository = itemRepository;
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
+        this.cartItemOptionRepository = cartItemOptionRepository;
+        this.itemOptionRepository = itemOptionRepository;
     }
 
 
@@ -65,7 +72,14 @@ public class CartServiceImpl implements CartService {
     public CreateCartResult createOrGetCart(String userId,
                                             UUID storeId,
                                             boolean forceReplace,
-                                            List<CreateCartCommand.Item> items) {
+                                            List<CreateCartCommand.Item> items,
+                                            UUID addressId) {
+
+        System.out.println("=== CartService Debug ===");
+        System.out.println("userId: " + userId);
+        System.out.println("storeId: " + storeId);
+        System.out.println("forceReplace: " + forceReplace);
+        System.out.println("items: " + items);
 
         // --- 0) 유효성(수량 ≥ 1) ---
         if (items != null) {
@@ -108,10 +122,14 @@ public class CartServiceImpl implements CartService {
             cart = Cart.builder()
                     .user(user)             // User 엔티티 사용
                     .store(store)           // Store 엔티티 사용
+                    .addressId(addressId)   // Address ID 설정
                     .build();
             cart = cartRepository.save(cart);
             created = true;
         } else {
+            // 기존 카트의 addressId 업데이트
+            cart.setAddressId(addressId);
+            cartRepository.save(cart);
             reused = true;
         }
 
@@ -133,13 +151,54 @@ public class CartServiceImpl implements CartService {
                     CartItem newItem = CartItem.builder()
                             .item(item)
                             .quantity(reqItem.quantity())
-                            .itemPrice(item.getPrice())
+                            .itemPrice(new BigDecimal(item.getPrice().toString()))
                             .build();
                     newItem.setCart(cart);
                     cartItemRepository.save(newItem);
+                    
+                    // 옵션 정보 저장
+                    if (reqItem.options() != null && !reqItem.options().isEmpty()) {
+                        for (CreateCartCommand.Option reqOption : reqItem.options()) {
+                            // ItemOption 엔티티 조회
+                            com.sparta.sparta_eats.store.domain.entity.ItemOption itemOption = 
+                                    itemOptionRepository.findById(reqOption.itemOptionId())
+                                            .orElseThrow(() -> new IllegalArgumentException("ItemOption not found: " + reqOption.itemOptionId()));
+                            
+                            // CartItemOption 생성 및 저장
+                            CartItemOption cartItemOption = CartItemOption.builder()
+                                    .itemOption(itemOption)
+                                    .quantity(reqOption.quantity())
+                                    .build();
+                            cartItemOption.attachTo(newItem);
+                            cartItemOptionRepository.save(cartItemOption);
+                        }
+                    }
                 } else {
                     // 기존 아이템 수량 증가
                     existingItem.increaseQuantity(reqItem.quantity());
+                    
+                    // 기존 아이템에 옵션 정보가 없고 요청에 옵션이 있으면 추가
+                    if (reqItem.options() != null && !reqItem.options().isEmpty()) {
+                        // 기존 옵션들 확인
+                        List<CartItemOption> existingOptions = cartItemOptionRepository.findByCartItem(existingItem);
+                        if (existingOptions.isEmpty()) {
+                            // 기존 옵션이 없으면 새로 추가
+                            for (CreateCartCommand.Option reqOption : reqItem.options()) {
+                                // ItemOption 엔티티 조회
+                                com.sparta.sparta_eats.store.domain.entity.ItemOption itemOption = 
+                                        itemOptionRepository.findById(reqOption.itemOptionId())
+                                                .orElseThrow(() -> new IllegalArgumentException("ItemOption not found: " + reqOption.itemOptionId()));
+                                
+                                // CartItemOption 생성 및 저장
+                                CartItemOption cartItemOption = CartItemOption.builder()
+                                        .itemOption(itemOption)
+                                        .quantity(reqOption.quantity())
+                                        .build();
+                                cartItemOption.attachTo(existingItem);
+                                cartItemOptionRepository.save(cartItemOption);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -171,31 +230,54 @@ public class CartServiceImpl implements CartService {
     // ================== 내부 유틸 ==================
 
     private CartSnapshot toSnapshot(Cart cart) {
+        System.out.println("=== toSnapshot Debug ===");
+        System.out.println("Cart ID: " + cart.getId());
+        System.out.println("Cart items count: " + cart.getItems().size());
+        
         // cart.getItems() 가 LAZY라면 Controller에서 EntityGraph로 불러오거나
         // CartRepository의 findWithItems... 를 통해 항상 items/option을 로딩하도록 사용하세요.
         List<CartSnapshot.CartItemSnapshot> itemSnaps = cart.getItems().stream()
-                .map(ci -> new CartSnapshot.CartItemSnapshot(
-                        ci.getId(),
-                        ci.getItem().getId(),
-                        ci.getQuantity(),
-                        "", // optionComboHash는 더 이상 사용하지 않음
-                        ci.getOptions().stream()
-                                .map(op -> new CartSnapshot.CartItemOptionSnapshot(
+                .map(ci -> {
+                    System.out.println("Processing CartItem: " + ci.getId() + ", Item: " + ci.getItem().getName());
+                    
+                    // 옵션을 별도로 로딩 (JOIN FETCH로 LazyInitializationException 방지)
+                    List<CartItemOption> foundOptions = cartItemOptionRepository.findByCartItemWithItemOption(ci);
+                    System.out.println("Found options for CartItem " + ci.getId() + ": " + foundOptions.size());
+                    
+                    List<CartSnapshot.CartItemOptionSnapshot> optionSnaps = foundOptions
+                            .stream()
+                            .map(op -> {
+                                System.out.println("Processing option: " + op.getId() + ", ItemOption: " + op.getItemOption().getId() + ", Quantity: " + op.getQuantity());
+                                return new CartSnapshot.CartItemOptionSnapshot(
                                         op.getId(), op.getItemOption().getId(), op.getQuantity()
-                                ))
-                                .toList(),
-                        asInstant(ci.getCreatedAt()),
-                        asInstant(ci.getUpdatedAt())
-                ))
+                                );
+                            })
+                            .toList();
+                    
+                    System.out.println("CartItem options count: " + optionSnaps.size());
+                    
+                    return new CartSnapshot.CartItemSnapshot(
+                            ci.getId(),
+                            ci.getItem().getId(),
+                            ci.getQuantity(),
+                            "", // optionComboHash는 더 이상 사용하지 않음
+                            optionSnaps,
+                            asInstant(ci.getCreatedAt()),
+                            asInstant(ci.getUpdatedAt())
+                    );
+                })
                 .toList();
+        
+        System.out.println("Final itemSnaps count: " + itemSnaps.size());
 
         return new CartSnapshot(
                 cart.getId(),
                 cart.getUser().getUserId(),
                 cart.getStore().getId(),
                 itemSnaps,
-                null, // Cart에는 createdAt이 없음
-                null  // Cart에는 updatedAt이 없음
+                asInstant(cart.getCreatedAt()),
+                asInstant(cart.getUpdatedAt()),
+                cart.getAddressId()
         );
     }
 
@@ -208,7 +290,7 @@ public class CartServiceImpl implements CartService {
         throw new IllegalArgumentException("Unsupported timestamp type: " + ts.getClass());
     }
 
-
+    
     @Override
     public CartSnapshot getCartByUserId(String userId) {
         // 사용자 조회
@@ -216,7 +298,7 @@ public class CartServiceImpl implements CartService {
         if (user == null) {
             return null;
         }
-
+        
         // 사용자의 장바구니 조회 (items와 options까지 함께 로딩)
         Cart cart = cartRepository.findWithItemsByUser(user).orElse(null);
         
@@ -230,6 +312,11 @@ public class CartServiceImpl implements CartService {
     
     @Override
     public CartSnapshot changeCartItemQuantity(String userId, UUID cartItemId, int quantity) {
+        System.out.println("=== changeCartItemQuantity Debug ===");
+        System.out.println("userId: " + userId);
+        System.out.println("cartItemId: " + cartItemId);
+        System.out.println("requested quantity: " + quantity);
+        
         // 1. 수량 검증
         if (quantity < 0) {
             throw new InvalidQuantityException("수량은 0 이상이어야 합니다");
@@ -238,6 +325,8 @@ public class CartServiceImpl implements CartService {
         // 2. 장바구니 아이템 조회 및 권한 확인
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new CartItemNotFoundException("장바구니 아이템을 찾을 수 없습니다: " + cartItemId));
+        
+        System.out.println("Found cartItem: " + cartItem.getId() + ", current quantity: " + cartItem.getQuantity());
         
         // 3. 사용자 권한 확인 (본인의 장바구니인지 확인)
         Cart cart = cartItem.getCart();
@@ -248,16 +337,23 @@ public class CartServiceImpl implements CartService {
         // 4. 수량 변경 처리
         if (quantity == 0) {
             // 수량이 0이면 해당 아이템 삭제
+            System.out.println("Deleting cartItem (quantity = 0)");
             cartItemRepository.delete(cartItem);
         } else {
             // 수량 변경
-            cartItem.increaseQuantity(quantity - cartItem.getQuantity());
+            int currentQuantity = cartItem.getQuantity();
+            int quantityDiff = quantity - currentQuantity;
+            System.out.println("Current quantity: " + currentQuantity + ", quantity diff: " + quantityDiff);
+            
+            cartItem.increaseQuantity(quantityDiff);
+            System.out.println("After increaseQuantity, new quantity: " + cartItem.getQuantity());
         }
         
         // 5. 업데이트된 장바구니 스냅샷 반환
         Cart updatedCart = cartRepository.findWithItemsByIdAndUser(cart.getId(), cart.getUser())
                 .orElseThrow(() -> new CartNotFoundException());
         
+        System.out.println("Updated cart items count: " + updatedCart.getItems().size());
         return toSnapshot(updatedCart);
     }
 }

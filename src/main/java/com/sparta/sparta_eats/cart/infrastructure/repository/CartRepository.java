@@ -19,12 +19,12 @@ public interface CartRepository extends JpaRepository<Cart, UUID> {
     // 동일 매장 카트 보유 여부
     boolean existsByUserAndStoreId(User user, UUID storeId);
 
-    // 카트 + 아이템(+옵션)까지 한 번에 스냅샷 조회 (응답용)
-    @EntityGraph(attributePaths = {"items", "items.options"})
+    // 카트 + 아이템까지 한 번에 스냅샷 조회 (응답용)
+    @EntityGraph(attributePaths = {"items"})
     Optional<Cart> findWithItemsByIdAndUser(UUID id, User user);
     
-    // 사용자로 카트 + 아이템(+옵션)까지 한 번에 조회
-    @EntityGraph(attributePaths = {"items", "items.options"})
+    // 사용자로 카트 + 아이템까지 한 번에 조회
+    @EntityGraph(attributePaths = {"items"})
     Optional<Cart> findWithItemsByUser(User user);
 
 }

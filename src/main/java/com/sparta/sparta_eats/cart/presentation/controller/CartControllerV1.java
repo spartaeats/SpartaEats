@@ -5,18 +5,21 @@ import com.sparta.sparta_eats.cart.application.dto.CartSnapshot;
 import com.sparta.sparta_eats.cart.application.dto.CreateCartCommand;
 import com.sparta.sparta_eats.cart.application.dto.CreateCartResult;
 import com.sparta.sparta_eats.cart.application.service.CartService;
+import com.sparta.sparta_eats.cart.application.service.CartTotalsService;
 import com.sparta.sparta_eats.cart.presentation.dto.request.ReqCartCreateV1;
 import com.sparta.sparta_eats.cart.presentation.dto.request.ReqCartItemQuantityChangeV1;
 import com.sparta.sparta_eats.cart.presentation.dto.response.ResCartV1;
-import com.sparta.sparta_eats.cart.presentation.dto.response.ResCreateCartResultV1;
 import com.sparta.sparta_eats.item.domain.entity.Item;
 import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.item.domain.repository.ItemRepository;
 import com.sparta.sparta_eats.store.domain.repository.StoreRepository;
+import com.sparta.sparta_eats.cart.domain.entity.CartItemOption;
+import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemOptionRepository;
+import com.sparta.sparta_eats.cart.infrastructure.repository.CartItemRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.sparta.sparta_eats.global.infrastructure.config.security.UserDetailsImpl;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -43,21 +46,36 @@ public class CartControllerV1 {
     private final CartService cartService;
     private final ItemRepository itemRepository;
     private final StoreRepository storeRepository;
+    private final CartItemOptionRepository cartItemOptionRepository;
+    private final CartItemRepository cartItemRepository;
+    private final CartTotalsService cartTotalsService;
 
-    public CartControllerV1(CartService cartService, ItemRepository itemRepository, StoreRepository storeRepository) {
+    public CartControllerV1(CartService cartService, ItemRepository itemRepository, StoreRepository storeRepository, CartItemOptionRepository cartItemOptionRepository, CartItemRepository cartItemRepository, CartTotalsService cartTotalsService) {
         this.cartService = cartService;
         this.itemRepository = itemRepository;
         this.storeRepository = storeRepository;
+        this.cartItemOptionRepository = cartItemOptionRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.cartTotalsService = cartTotalsService;
     }
 
     /** 장바구니 생성/재사용 */
     @PostMapping
-    public ResponseEntity<ResCreateCartResultV1> createCart(
+    public ResponseEntity<ResCartV1> createCart(
             @Valid @RequestBody ReqCartCreateV1 req,
-            // 프로젝트마다 다르니 편의상 헤더로도 받을 수 있게 둠(선택)
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        String userId = resolveUserId(userIdHeader);
+        System.out.println("=== CartController Debug ===");
+        System.out.println("userDetails: " + userDetails);
+        System.out.println("userDetails.getUser(): " + (userDetails != null ? userDetails.getUser() : "null"));
+        
+        if (userDetails == null || userDetails.getUser() == null) {
+            System.out.println("ERROR: userDetails or user is null!");
+            return ResponseEntity.status(500).build();
+        }
+        
+        String userId = userDetails.getUser().getUserId();
+        System.out.println("userId: " + userId);
 
         // 1. 입력 검증
         if (req.storeId() == null) {
@@ -80,16 +98,12 @@ public class CartControllerV1 {
                 userId,
                 req.storeId(),
                 forceReplace,
-                toCommandItems(req.items())
+                toCommandItems(req.items()),
+                req.addressId()
         );
 
         // 4. 응답 DTO 생성
-        ResCreateCartResultV1 response = new ResCreateCartResultV1(
-                toResCart(result.cart()),
-                result.created(),
-                result.reused(),
-                result.replacedPreviousStoreCart()
-        );
+        ResCartV1 response = toResCart(result.cart());
 
         // 5. 상태 코드 분기
         if (result.created()) {
@@ -112,9 +126,18 @@ public class CartControllerV1 {
      */
     @GetMapping
     public ResponseEntity<ResCartV1> getCart(
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        String userId = resolveUserId(userIdHeader);
+        System.out.println("=== GET Cart Debug ===");
+        System.out.println("userDetails: " + userDetails);
+        
+        if (userDetails == null || userDetails.getUser() == null) {
+            System.out.println("ERROR: userDetails or user is null!");
+            return ResponseEntity.status(500).build();
+        }
+        
+        String userId = userDetails.getUser().getUserId();
+        System.out.println("userId: " + userId);
         
         // 사용자의 장바구니 조회 (없으면 null)
         CartSnapshot snap = cartService.getCartByUserId(userId);
@@ -132,9 +155,9 @@ public class CartControllerV1 {
     @DeleteMapping("/{cartId}")
     public ResponseEntity<Void> deleteCart(
             @PathVariable UUID cartId,
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        String userId = resolveUserId(userIdHeader);
+        String userId = userDetails.getUser().getUserId();
         cartService.deleteCart(userId, cartId);
         return ResponseEntity.noContent().build();
     }
@@ -151,9 +174,9 @@ public class CartControllerV1 {
     public ResponseEntity<ResCartV1> changeCartItemQuantity(
             @PathVariable UUID cartItemId,
             @Valid @RequestBody ReqCartItemQuantityChangeV1 req,
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        String userId = resolveUserId(userIdHeader);
+        String userId = userDetails.getUser().getUserId();
         
         // 수량 변경 처리
         CartSnapshot updatedCart = cartService.changeCartItemQuantity(userId, cartItemId, req.quantity());
@@ -189,12 +212,7 @@ public class CartControllerV1 {
                 null,  // cartId = null
                 null,  // store = null
                 List.of(), // items = 빈 배열
-                new ResCartV1.Amounts(
-                        BigDecimal.ZERO, // itemsTotal = 0
-                        BigDecimal.ZERO, // deliveryFee = 0
-                        BigDecimal.ZERO, // discountTotal = 0
-                        BigDecimal.ZERO  // payableTotal = 0
-                ),
+                null, // amounts는 /totals에서 계산
                 null, // addressId = null
                 null, // createdAt = null
                 null  // updatedAt = null
@@ -215,7 +233,7 @@ public class CartControllerV1 {
                 .toList();
         List<Item> items = itemRepository.findAllById(itemIds);
         
-        // 3. 상품별 가격 계산
+        // 3. 상품별 상세 정보 (옵션과 가격 포함)
         List<ResCartV1.Item> resItems = s.items().stream().map(ci -> {
             // 해당 상품 찾기
             Item item = items.stream()
@@ -223,61 +241,91 @@ public class CartControllerV1 {
                     .findFirst()
                     .orElse(new Item()); // 기본값
             
-            // 가격 계산 (간단하게)
-            BigDecimal basePrice = item.getPrice() != null ? 
-                    new BigDecimal(item.getPrice().toString()) : BigDecimal.ZERO;
-            BigDecimal optionsPrice = BigDecimal.ZERO; // 옵션은 나중에 구현
-            BigDecimal unitPrice = basePrice.add(optionsPrice);
-            BigDecimal calculatedLinePrice = unitPrice.multiply(BigDecimal.valueOf(ci.quantity()));
+            // 기본 가격 (할인가가 있으면 할인가, 없으면 정가)
+            BigDecimal basePrice = item.getSalePrice() != null ? 
+                    BigDecimal.valueOf(item.getSalePrice().longValue()) : 
+                    BigDecimal.valueOf(item.getPrice().longValue());
             
-            // 옵션 ID 목록 (간단하게 빈 배열)
-            List<UUID> optionIds = List.of(); // TODO: 실제 옵션 ID 조회
+            // 옵션 정보 조회 및 가격 계산 (JOIN FETCH 사용)
+            List<ResCartV1.Item.Option> options = ci.options().stream().map(opt -> {
+                // JOIN FETCH로 ItemOption을 함께 조회하여 LazyInitializationException 방지
+                CartItemOption cartItemOption = cartItemOptionRepository.findByIdWithItemOption(opt.id()).orElse(null);
+                
+                if (cartItemOption != null && cartItemOption.getItemOption() != null) {
+                    return new ResCartV1.Item.Option(
+                            opt.id(),
+                            cartItemOption.getItemOption().getName(),
+                            BigDecimal.valueOf(cartItemOption.getItemOption().getAddPrice().longValue()),
+                            opt.quantity()
+                    );
+                } else {
+                    // 옵션 정보를 찾을 수 없는 경우 기본값
+                    return new ResCartV1.Item.Option(
+                            opt.id(),
+                            "옵션명 없음",
+                            BigDecimal.ZERO,
+                            opt.quantity()
+                    );
+                }
+            }).toList();
+            
+            // 옵션 총 가격 계산
+            BigDecimal optionsPrice = options.stream()
+                    .map(opt -> opt.addPrice().multiply(BigDecimal.valueOf(opt.quantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 단위 가격 (기본가 + 옵션가)
+            BigDecimal unitPrice = basePrice.add(optionsPrice);
+            
+            // 라인 총 가격 (단위가 * 수량)
+            BigDecimal calculatedLinePrice = unitPrice.multiply(BigDecimal.valueOf(ci.quantity()));
             
             return new ResCartV1.Item(
                     ci.id(), // cartItemId
-                    ci.itemId(), // itemId
                     item.getName() != null ? item.getName() : "상품명 없음",
                     ci.quantity(),
                     basePrice,
+                    options,
                     optionsPrice,
                     unitPrice,
-                    calculatedLinePrice,
-                    optionIds
+                    calculatedLinePrice
             );
         }).toList();
         
-        // 4. 총 금액 계산
-        BigDecimal itemsTotal = resItems.stream()
-                .map(ResCartV1.Item::calculatedLinePrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        BigDecimal deliveryFee = BigDecimal.valueOf(3000); // 기본 배달비
-        BigDecimal discountTotal = BigDecimal.ZERO; // 할인 없음
-        BigDecimal payableTotal = itemsTotal.add(deliveryFee).subtract(discountTotal);
+        // 4. 전체 가격 계산 (CartTotalsService 사용)
+        ResCartV1.Amounts amounts = null;
+        try {
+            // CartTotalsService를 사용하여 전체 가격 계산
+            // 여기서는 간단하게 items의 총합만 계산
+            BigDecimal itemsTotal = resItems.stream()
+                    .map(ResCartV1.Item::calculatedLinePrice)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 기본 배송비 (예: 3000원)
+            BigDecimal deliveryFee = itemsTotal.compareTo(BigDecimal.valueOf(20000)) > 0 ? 
+                    BigDecimal.ZERO : BigDecimal.valueOf(3000);
+            
+            amounts = new ResCartV1.Amounts(
+                    itemsTotal,
+                    deliveryFee,
+                    BigDecimal.ZERO, // 할인 총액
+                    itemsTotal.add(deliveryFee) // 결제 총액
+            );
+        } catch (Exception e) {
+            // 가격 계산 실패 시 null로 설정
+            amounts = null;
+        }
         
         return new ResCartV1(
                 true, // exists = true
                 s.id(), // cartId
                 new ResCartV1.Store(s.storeId(), store.getName() != null ? store.getName() : "매장명 없음"),
                 resItems,
-                new ResCartV1.Amounts(
-                        itemsTotal,
-                        deliveryFee,
-                        discountTotal,
-                        payableTotal
-                ),
-                null, // addressId는 나중에 구현
+                amounts, // 계산된 가격 정보
+                s.addressId(), // addressId
                 s.createdAt(),
                 s.updatedAt()
         );
     }
 
-    // 보안 컨텍스트에서 userId 추출(임시). 프로젝트 보안 설정에 맞게 교체 가능.
-    private String resolveUserId(String headerUserId) {
-        if (headerUserId != null && !headerUserId.isBlank()) return headerUserId;
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null) return auth.getName(); // username을 userId로 사용
-        throw new IllegalStateException("Cannot resolve userId. Provide X-User-Id header or configure security principal.");
-        // 실제 프로젝트에선 @AuthenticationPrincipal(expression="userId") String userId 형태로 쓰는 걸 권장
-    }
 }

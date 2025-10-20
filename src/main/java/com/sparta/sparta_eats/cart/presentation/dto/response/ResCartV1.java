@@ -22,15 +22,21 @@ public record ResCartV1(
     
     public record Item(
             UUID cartItemId,
-            UUID itemId,
             String name,
             int quantity,
             BigDecimal basePrice,
+            List<Option> options,
             BigDecimal optionsPrice,
             BigDecimal unitPrice,
-            BigDecimal calculatedLinePrice,
-            List<UUID> optionIds
-    ) {}
+            BigDecimal calculatedLinePrice
+    ) {
+        public record Option(
+                UUID optionId,
+                String optionName,
+                BigDecimal addPrice,
+                int quantity
+        ) {}
+    }
     
     public record Amounts(
             BigDecimal itemsTotal,

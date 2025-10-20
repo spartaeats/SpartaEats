@@ -1,5 +1,6 @@
 package com.sparta.sparta_eats.cart.domain.entity;
 
+import com.sparta.sparta_eats.global.entity.BaseEntity;
 import com.sparta.sparta_eats.store.domain.entity.Store;
 import com.sparta.sparta_eats.user.domain.entity.User;
 import jakarta.persistence.*;
@@ -21,7 +22,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "p_carts")
-public class Cart {
+public class Cart extends BaseEntity {
 
     /** 기본키: UUID */
     @Id
@@ -43,11 +44,16 @@ public class Cart {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> items = new ArrayList<>();
 
+    /** 배송 주소 ID (선택적) */
+    @Column(name = "address_id")
+    private UUID addressId;
+
     /** Builder 생성자 — 필요한 필드만 초기화 */
     @Builder
-    public Cart(User user, Store store) {
+    public Cart(User user, Store store, UUID addressId) {
         this.user = user;
         this.store = store;
+        this.addressId = addressId;
     }
 
     /** 아이템 추가 (연관관계 관리) */
@@ -60,6 +66,11 @@ public class Cart {
     /** 장바구니 안에 담긴 상품 수 */
     public int getTotalItemCount() {
         return items.stream().mapToInt(CartItem::getQuantity).sum();
+    }
+
+    /** 주소 ID 설정 */
+    public void setAddressId(UUID addressId) {
+        this.addressId = addressId;
     }
 
 }

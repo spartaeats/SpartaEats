@@ -13,7 +13,8 @@ public interface CartService {
             String userId,
             UUID storeId,
             boolean forceReplace,
-            List<CreateCartCommand.Item> items
+            List<CreateCartCommand.Item> items,
+            UUID addressId
     );
 
     CartSnapshot getCart(String userId, UUID cartId);
